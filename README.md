@@ -24,7 +24,7 @@ You can download the latest APK from the [Releases](https://github.com/oriilol/h
 
 ## Known Issues and Bug Reporting
 
-This is the initial v1.0 release. While the core experience is highly stable, you might encounter minor bugs or edge cases across different Android versions. 
+While the core experience is highly stable, you might encounter minor bugs or edge cases across different Android versions. 
 
 If you find a bug, please check the existing issues or open a new one in the Issues tab with steps to reproduce it.
 
