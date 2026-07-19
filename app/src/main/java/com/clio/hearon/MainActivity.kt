@@ -221,7 +221,7 @@ val PixelFont = FontFamily(
     Font(resId = R.font.google_sans_flex, variationSettings = FontVariation.Settings(FontVariation.Setting("ROND", 100f)))
 )
 
-val APP_VERSION = "1.1.0"
+val APP_VERSION = "1.2.0"
 
 object L {
     private val es = mapOf(

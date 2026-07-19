@@ -15,8 +15,8 @@ android {
         applicationId = "com.clio.hearon"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,13 +40,12 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation("io.github.yushosei:newpipe-extractor-kmp:1.2.1")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.media3:media3-exoplayer:1.3.0")
     implementation("androidx.media3:media3-session:1.3.0")
-    implementation("com.github.teamnewpipe:newpipeextractor:v0.25.2")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
     implementation("io.reactivex.rxjava3:rxjava:3.1.8")
     implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
     implementation(libs.androidx.activity.compose)
