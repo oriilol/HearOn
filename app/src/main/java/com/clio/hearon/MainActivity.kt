@@ -209,6 +209,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material3.FilledTonalButton
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -221,10 +224,16 @@ val PixelFont = FontFamily(
     Font(resId = R.font.google_sans_flex, variationSettings = FontVariation.Settings(FontVariation.Setting("ROND", 100f)))
 )
 
-val APP_VERSION = "1.2.0"
+val APP_VERSION = "1.3.0"
 
 object L {
     private val es = mapOf(
+        "download" to "Descargar",
+        "remove_download" to "Quitar descarga",
+        "mix" to "Mix",
+        "play_all" to "Reproducir",
+        "no_downloads_yet" to "Aún no has descargado música",
+        "downloading" to "Descargando...",
         "lang_system" to "Sistema (Predeterminado)",
         "offline_title" to "Sin conexión a internet",
         "offline_desc" to "Ve a tu Biblioteca para escuchar la música que tienes en caché.",
@@ -336,6 +345,12 @@ object L {
     )
 
     private val en = mapOf(
+        "download" to "Download",
+        "remove_download" to "Remove download",
+        "mix" to "Mix",
+        "play_all" to "Play",
+        "no_downloads_yet" to "You haven't downloaded any music yet",
+        "downloading" to "Downloading...",
         "lang_system" to "System (Default)",
         "offline_title" to "No internet connection",
         "offline_desc" to "Go to your Library to listen to your cached music.",
@@ -447,6 +462,12 @@ object L {
     )
 
     private val fr = mapOf(
+        "download" to "Télécharger",
+        "remove_download" to "Supprimer le téléchargement",
+        "mix" to "Mix",
+        "play_all" to "Lire",
+        "no_downloads_yet" to "Vous n'avez encore rien téléchargé",
+        "downloading" to "Téléchargement...",
         "lang_system" to "Système (Par défaut)",
         "offline_title" to "Pas de connexion internet",
         "offline_desc" to "Allez dans votre Bibliothèque pour écouter la musique en cache.",
@@ -558,6 +579,12 @@ object L {
     )
 
     private val de = mapOf(
+        "download" to "Herunterladen",
+        "remove_download" to "Download entfernen",
+        "mix" to "Mix",
+        "play_all" to "Abspielen",
+        "no_downloads_yet" to "Du hast noch keine Musik heruntergeladen",
+        "downloading" to "Wird heruntergeladen...",
         "lang_system" to "System (Standard)",
         "offline_title" to "Keine Internetverbindung",
         "offline_desc" to "Gehe zur Bibliothek, um gespeicherte Musik zu hören.",
@@ -669,6 +696,12 @@ object L {
     )
 
     private val it = mapOf(
+        "download" to "Scarica",
+        "remove_download" to "Rimuovi download",
+        "mix" to "Mix",
+        "play_all" to "Riproduci",
+        "no_downloads_yet" to "Non hai ancora scaricato musica",
+        "downloading" to "Download in corso...",
         "lang_system" to "Sistema (Predefinito)",
         "offline_title" to "Nessuna connessione internet",
         "offline_desc" to "Vai alla tua Libreria per ascoltare la musica in cache.",
@@ -780,6 +813,12 @@ object L {
     )
 
     private val pt = mapOf(
+        "download" to "Transferir",
+        "remove_download" to "Remover transferência",
+        "mix" to "Mix",
+        "play_all" to "Reproduzir",
+        "no_downloads_yet" to "Ainda não transferiste música",
+        "downloading" to "A transferir...",
         "lang_system" to "Sistema (Padrão)",
         "offline_title" to "Sem conexão à internet",
         "offline_desc" to "Vá para sua Biblioteca para ouvir música em cache.",
@@ -891,6 +930,12 @@ object L {
     )
 
     private val ru = mapOf(
+        "download" to "Скачать",
+        "remove_download" to "Удалить загрузку",
+        "mix" to "Микс",
+        "play_all" to "Слушать",
+        "no_downloads_yet" to "Вы ещё ничего не скачали",
+        "downloading" to "Загрузка...",
         "lang_system" to "Системный (По умолчанию)",
         "offline_title" to "Нет подключения к интернету",
         "offline_desc" to "Перейдите в медиатеку для прослушивания кэшированной музыки.",
@@ -1002,6 +1047,12 @@ object L {
     )
 
     private val ja = mapOf(
+        "download" to "ダウンロード",
+        "remove_download" to "ダウンロードを削除",
+        "mix" to "ミックス",
+        "play_all" to "再生",
+        "no_downloads_yet" to "まだダウンロードした曲はありません",
+        "downloading" to "ダウンロード中...",
         "lang_system" to "システム (デフォルト)",
         "offline_title" to "インターネット接続がありません",
         "offline_desc" to "キャッシュされた音楽を聴くにはライブラリへ移動してください。",
@@ -1113,6 +1164,12 @@ object L {
     )
 
     private val zh = mapOf(
+        "download" to "下载",
+        "remove_download" to "删除下载",
+        "mix" to "混音",
+        "play_all" to "播放",
+        "no_downloads_yet" to "你还没有下载任何音乐",
+        "downloading" to "正在下载...",
         "lang_system" to "系统 (默认)",
         "offline_title" to "无网络连接",
         "offline_desc" to "前往您的音乐库收听缓存的音乐。",
@@ -1224,6 +1281,12 @@ object L {
     )
 
     private val hi = mapOf(
+        "download" to "डाउनलोड करें",
+        "remove_download" to "डाउनलोड हटाएँ",
+        "mix" to "मिक्स",
+        "play_all" to "चलाएँ",
+        "no_downloads_yet" to "आपने अभी तक कोई संगीत डाउनलोड नहीं किया है",
+        "downloading" to "डाउनलोड हो रहा है...",
         "lang_system" to "सिस्टम (डिफ़ॉल्ट)",
         "offline_title" to "कोई इंटरनेट कनेक्शन नहीं",
         "offline_desc" to "कैश किए गए संगीत को सुनने के लिए अपनी लाइब्रेरी में जाएं।",
@@ -1335,6 +1398,12 @@ object L {
     )
 
     private val ar = mapOf(
+        "download" to "تنزيل",
+        "remove_download" to "إزالة التنزيل",
+        "mix" to "مزيج",
+        "play_all" to "تشغيل",
+        "no_downloads_yet" to "لم تقم بتنزيل أي موسيقى بعد",
+        "downloading" to "جارٍ التنزيل...",
         "lang_system" to "النظام (الافتراضي)",
         "offline_title" to "لا يوجد اتصال بالإنترنت",
         "offline_desc" to "انتقل إلى مكتبتك للاستماع إلى الموسيقى المحفوظة.",
@@ -1529,6 +1598,14 @@ class MainActivity : ComponentActivity() {
             org.schabi.newpipe.extractor.NewPipe.init(com.clio.hearon.api.NPDownloader())
         } catch (e: Exception) {}
 
+        // Cover cache limited by the "cover limit" setting (applies on next launch).
+        val maxCoverMB = getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE).getFloat("max_img_cache", 512f)
+        coil.Coil.setImageLoader(
+            coil.ImageLoader.Builder(this)
+                .diskCache { coil.disk.DiskCache.Builder().directory(cacheDir.resolve("image_cache")).maxSizeBytes(maxCoverMB.toLong() * 1024 * 1024).build() }
+                .build()
+        )
+
         setContent {
             val context = LocalContext.current
             val prefs = context.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
@@ -1703,31 +1780,14 @@ fun HearonApp(
 
     LaunchedEffect(currentTrack?.coverUrl) {
         if (currentTrack != null) {
-            onColorExtracted(getDominantColor(currentTrack!!.coverUrl))
+            onColorExtracted(getDominantColor(coverFor(currentTrack!!, 120, prefs)))
         } else {
             onColorExtracted(null)
         }
     }
 
-    val likedTracksRaw = prefs.getStringSet("liked_tracks_data", emptySet()) ?: emptySet()
-    val likedTracks = remember {
-        mutableStateListOf<YtTrack>().apply {
-            addAll(likedTracksRaw.mapNotNull {
-                val parts = it.split("|||")
-                if (parts.size == 4) YtTrack(parts[0], parts[1], parts[2], parts[3]) else null
-            })
-        }
-    }
-
-    val recentlyPlayedRaw = prefs.getStringSet("recent_tracks_data", emptySet()) ?: emptySet()
-    val recentlyPlayed = remember {
-        mutableStateListOf<YtTrack>().apply {
-            addAll(recentlyPlayedRaw.mapNotNull {
-                val parts = it.split("|||")
-                if (parts.size == 4) YtTrack(parts[0], parts[1], parts[2], parts[3]) else null
-            })
-        }
-    }
+    val likedTracks = remember { mutableStateListOf<YtTrack>().apply { addAll(Storage.loadTracks(prefs, "liked_json", "liked_tracks_data")) } }
+    val recentlyPlayed = remember { mutableStateListOf<YtTrack>().apply { addAll(Storage.loadTracks(prefs, "recent_json", "recent_tracks_data")) } }
 
     LaunchedEffect(recentlyPlayed.firstOrNull()?.id) {
         val lastId = recentlyPlayed.firstOrNull()?.id
@@ -1743,15 +1803,9 @@ fun HearonApp(
     var cacheSizeMB by remember { mutableIntStateOf(0) }
 
     fun refreshCacheCount() {
-        val dir = File(context.filesDir, "hearon_downloads")
-        if (dir.exists()) {
-            val files = dir.listFiles()?.filter { it.name.endsWith(".m4a") } ?: emptyList()
-            cachedFilesCount = files.size
-            cacheSizeMB = (files.sumOf { it.length() } / (1024 * 1024)).toInt()
-        } else {
-            cachedFilesCount = 0
-            cacheSizeMB = 0
-        }
+        val files = Downloads.dir(context).listFiles()?.filter { it.name.endsWith(".m4a") } ?: emptyList()
+        cachedFilesCount = files.size
+        cacheSizeMB = (files.sumOf { it.length() } / (1024 * 1024)).toInt()
     }
 
     fun saveRecentTrack(t: YtTrack) {
@@ -1759,43 +1813,38 @@ fun HearonApp(
         if (existingIndex != -1) recentlyPlayed.removeAt(existingIndex)
         recentlyPlayed.add(0, t)
         if (recentlyPlayed.size > 50) recentlyPlayed.removeAt(recentlyPlayed.size - 1)
-        prefs.edit().putStringSet("recent_tracks_data", recentlyPlayed.map { "${it.id}|||${it.title}|||${it.artist}|||${it.coverUrl}" }.toSet()).apply()
+        Storage.saveTracks(prefs, "recent_json", recentlyPlayed)
     }
 
     val onRefresh: () -> Unit = {
-        val downloadDir = File(context.filesDir, "hearon_downloads")
-        if (!downloadDir.exists()) downloadDir.mkdirs()
-        val raw = prefs.getStringSet("cached_tracks_data", emptySet()) ?: emptySet()
-        val verified = raw.mapNotNull {
-            val parts = it.split("|||")
-            if (parts.size == 4) {
-                val file = File(downloadDir, "${parts[0]}.m4a")
-                if (file.exists() && file.length() >= 50_000) YtTrack(parts[0], parts[1], parts[2], parts[3]) else null
-            } else null
-        }
+        val verified = Storage.loadTracks(prefs, "downloads_json", "cached_tracks_data").filter { Downloads.isDownloaded(context, it.id) }
         downloadedTracks.clear()
         downloadedTracks.addAll(verified)
-        prefs.edit().putStringSet("cached_tracks_data", verified.map { "${it.id}|||${it.title}|||${it.artist}|||${it.coverUrl}" }.toSet()).apply()
+        Storage.saveTracks(prefs, "downloads_json", verified)
+        refreshCacheCount()
+    }
+
+    /** Downloads [t] in the background and adds it to the Downloads list. */
+    fun downloadTrack(t: YtTrack) {
+        scope.launch {
+            if (Downloads.download(context, t)) {
+                if (downloadedTracks.none { it.id == t.id }) downloadedTracks.add(0, t)
+                Storage.saveTracks(prefs, "downloads_json", downloadedTracks)
+                refreshCacheCount()
+            }
+        }
+    }
+
+    fun removeDownload(t: YtTrack) {
+        Downloads.file(context, t.id).delete()
+        downloadedTracks.removeAll { it.id == t.id }
+        Storage.saveTracks(prefs, "downloads_json", downloadedTracks)
         refreshCacheCount()
     }
 
     LaunchedEffect(Unit) { onRefresh() }
 
-    val playlistsRaw = prefs.getStringSet("playlists_data", emptySet()) ?: emptySet()
-    val playlists = remember {
-        mutableStateListOf<Playlist>().apply {
-            addAll(playlistsRaw.mapNotNull {
-                val parts = it.split(":::")
-                if (parts.size == 2) {
-                    val pTracks = parts[1].split(";;;").mapNotNull { tp ->
-                        val p = tp.split("|||")
-                        if (p.size == 4) YtTrack(p[0], p[1], p[2], p[3]) else null
-                    }
-                    Playlist(parts[0], pTracks)
-                } else null
-            })
-        }
-    }
+    val playlists = remember { mutableStateListOf<Playlist>().apply { addAll(Storage.loadPlaylists(prefs)) } }
 
     var trackOptionsMenu by remember { mutableStateOf<TrackMenuData?>(null) }
     var trackToAdd by remember { mutableStateOf<YtTrack?>(null) }
@@ -1817,13 +1866,9 @@ fun HearonApp(
         trackOptionsMenu = null
     }
 
-    fun savePlaylists() {
-        prefs.edit().putStringSet("playlists_data", playlists.map { p -> "${p.name}:::${p.tracks.joinToString(";;;") { t -> "${t.id}|||${t.title}|||${t.artist}|||${t.coverUrl}" }}" }.toSet()).apply()
-    }
+    fun savePlaylists() = Storage.savePlaylists(prefs, playlists)
 
-    fun saveLikedTracks() {
-        prefs.edit().putStringSet("liked_tracks_data", likedTracks.map { "${it.id}|||${it.title}|||${it.artist}|||${it.coverUrl}" }.toSet()).apply()
-    }
+    fun saveLikedTracks() = Storage.saveTracks(prefs, "liked_json", likedTracks)
 
     LaunchedEffect(currentQueueIndex, playQueue.size, repeatMode) {
         val hasNext = currentQueueIndex < playQueue.size - 1 || repeatMode == Player.REPEAT_MODE_ALL
@@ -1857,38 +1902,35 @@ fun HearonApp(
 
     val prefetchNextTrack: (Int) -> Unit = { idx ->
         val nextIdx = if (idx < playQueue.size - 1) idx + 1 else if (repeatMode == Player.REPEAT_MODE_ALL) 0 else -1
-        if (nextIdx != -1) {
-            val nextTrack = playQueue[nextIdx]
-            scope.launch(Dispatchers.IO) {
-                val file = File(context.filesDir, "hearon_downloads/${nextTrack.id}.m4a")
-                val isLocal = file.exists() && file.length() >= 50_000
-                if (!isLocal && isOnline(context)) {
-                    try {
-                        val streamUrl = com.clio.hearon.api.YtMusicApi.getStreamUrl(nextTrack.id)
-                        if (streamUrl != null) {
-                            val dDir = File(context.filesDir, "hearon_downloads")
-                            if (!dDir.exists()) dDir.mkdirs()
-                            val conn = URL(streamUrl).openConnection() as HttpURLConnection
-                            conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-                            conn.connect()
-                            if (conn.responseCode in 200..299) {
-                                val tmpFile = File(dDir, "${nextTrack.id}.tmp")
-                                tmpFile.outputStream().use { out -> conn.inputStream.use { it.copyTo(out) } }
-                                if (tmpFile.exists() && tmpFile.length() >= 50_000) {
-                                    tmpFile.renameTo(file)
-                                } else {
-                                    tmpFile.delete()
-                                }
-                            }
-                        }
-                    } catch (e: Exception) { }
-                }
+        if (nextIdx != -1 && isOnline(context)) downloadTrack(playQueue[nextIdx])
+    }
+
+    /** Mix: the list shuffled, then extended with radio tracks similar to it. */
+    val playMix: (List<YtTrack>) -> Unit = mix@{ list ->
+        val playable = list.filter { isAppOnline || Downloads.isDownloaded(context, it.id) }.shuffled()
+        if (playable.isEmpty()) {
+            Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show()
+            return@mix
+        }
+        originalQueue = playable
+        playQueue = playable
+        currentQueueIndex = 0
+        currentTrack = playable[0]
+        scope.launch {
+            playTrack(playable[0], player, context, prefs, lang)
+            saveRecentTrack(playable[0])
+            prefetchNextTrack(0)
+            if (isAppOnline) {
+                val seen = playable.map { it.id }.toMutableSet()
+                val extra = playable.take(3).flatMap { HearonBackend.getUpNext(it.id) }.filter { seen.add(it.id) }.shuffled()
+                originalQueue = originalQueue + extra
+                playQueue = playQueue + extra
             }
         }
     }
 
     val handleTrackSelect: (YtTrack) -> Unit = { track ->
-        val isLocal = File(context.filesDir, "hearon_downloads/${track.id}.m4a").let { it.exists() && it.length() >= 50_000 }
+        val isLocal = Downloads.isDownloaded(context, track.id)
         if (!isAppOnline && !isLocal) {
             Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show()
         } else {
@@ -1913,7 +1955,7 @@ fun HearonApp(
     fun playNext() {
         if (playQueue.isNotEmpty() && currentQueueIndex < playQueue.size - 1) {
             val nextTrack = playQueue[currentQueueIndex + 1]
-            val isLocal = File(context.filesDir, "hearon_downloads/${nextTrack.id}.m4a").let { it.exists() && it.length() >= 50_000 }
+            val isLocal = Downloads.isDownloaded(context, nextTrack.id)
             if (!isAppOnline && !isLocal) {
                 Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show()
                 player?.pause()
@@ -1929,7 +1971,7 @@ fun HearonApp(
             }
         } else if (repeatMode == Player.REPEAT_MODE_ALL && playQueue.isNotEmpty()) {
             val nextTrack = playQueue[0]
-            val isLocal = File(context.filesDir, "hearon_downloads/${nextTrack.id}.m4a").let { it.exists() && it.length() >= 50_000 }
+            val isLocal = Downloads.isDownloaded(context, nextTrack.id)
             if (!isAppOnline && !isLocal) {
                 Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show()
                 player?.pause()
@@ -1953,7 +1995,7 @@ fun HearonApp(
         }
         if (currentQueueIndex > 0) {
             val prevTrack = playQueue[currentQueueIndex - 1]
-            val isLocal = File(context.filesDir, "hearon_downloads/${prevTrack.id}.m4a").let { it.exists() && it.length() >= 50_000 }
+            val isLocal = Downloads.isDownloaded(context, prevTrack.id)
             if (!isAppOnline && !isLocal) {
                 Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show()
                 player?.pause()
@@ -1990,7 +2032,7 @@ fun HearonApp(
         )
 
         if (isOnline(context)) {
-            tracks = HearonBackend.search("Éxitos Globales")
+            tracks = HearonBackend.trending()
         }
         isLoading = false
 
@@ -2098,7 +2140,7 @@ fun HearonApp(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val customCover = remember(t.id, coverUpdateTrigger) {
-                        prefs.getString("custom_cover_${t.id}", t.coverUrl.replace("w1080-h1080", "w226-h226"))
+                        coverFor(t, 226, prefs)
                     }
                     AsyncImage(
                         model = customCover,
@@ -2171,6 +2213,22 @@ fun HearonApp(
                     }
                 )
 
+                val isDownloaded = Downloads.isDownloaded(context, t.id)
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = { Text(if (isDownloaded) L.get("remove_download", lang) else L.get("download", lang)) },
+                    leadingContent = { Icon(if (isDownloaded) Icons.Default.DeleteOutline else Icons.Default.Download, null) },
+                    modifier = Modifier.clickable {
+                        if (isDownloaded) {
+                            removeDownload(t)
+                        } else {
+                            downloadTrack(t)
+                            Toast.makeText(context, L.get("downloading", lang), Toast.LENGTH_SHORT).show()
+                        }
+                        trackOptionsMenu = null
+                    }
+                )
+
                 ListItem(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     headlineContent = { Text(L.get("change_cover", lang)) },
@@ -2195,7 +2253,7 @@ fun HearonApp(
 
     if (showTrackInfo != null) {
         val t = showTrackInfo!!
-        val isLocal = File(context.filesDir, "hearon_downloads/${t.id}.m4a").let { it.exists() && it.length() >= 50_000 }
+        val isLocal = Downloads.isDownloaded(context, t.id)
         val quality = prefs.getString("audio_quality", "Alta")
 
         AlertDialog(
@@ -2265,22 +2323,7 @@ fun HearonApp(
                                 }
                             ) {
                                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    val cover = p.tracks.firstOrNull()?.coverUrl
-                                    if (cover != null) {
-                                        AsyncImage(
-                                            model = cover,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    } else {
-                                        Box(
-                                            modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(imageVector = Icons.Default.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                                        }
-                                    }
+                                    PlaylistCover(tracks = p.tracks, coverUpdateTrigger = coverUpdateTrigger, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)))
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Text(
                                         text = p.name,
@@ -2304,10 +2347,9 @@ fun HearonApp(
             confirmButton = {
                 Button(
                     onClick = {
-                        val cacheDir = java.io.File(context.filesDir, "hearon_downloads")
-                        cacheDir.deleteRecursively()
+                        Downloads.dir(context).deleteRecursively()
                         downloadedTracks.clear()
-                        prefs.edit().putStringSet("cached_tracks_data", emptySet()).apply()
+                        Storage.saveTracks(prefs, "downloads_json", downloadedTracks)
                         refreshCacheCount()
                         showCacheWarning = false
                     },
@@ -2330,7 +2372,7 @@ fun HearonApp(
                             onSelect = handleTrackSelect, onOptionsClick = { trackOptionsMenu = TrackMenuData(it) },
                             onRefresh = {
                                 scope.launch {
-                                    isLoading = true; tracks = HearonBackend.search("Éxitos Globales"); isLoading = false
+                                    isLoading = true; tracks = HearonBackend.trending(); isLoading = false
                                     val lastId = recentlyPlayed.firstOrNull()?.id
                                     if (lastId != null && isOnline(context)) {
                                         isLoadingForYou = true; forYouTracks = HearonBackend.getUpNext(lastId).filter { it.id != lastId }; isLoadingForYou = false
@@ -2353,7 +2395,7 @@ fun HearonApp(
                             onDeletePlaylist = { pIndex -> playlists.removeAt(pIndex); savePlaylists() },
                             onRenamePlaylist = { pIndex, newName -> val p = playlists[pIndex]; playlists[pIndex] = p.copy(name = newName); savePlaylists() },
                             onSelectTrack = { track, queue, index ->
-                                val isLocal = File(context.filesDir, "hearon_downloads/${track.id}.m4a").let { it.exists() && it.length() >= 50_000 }
+                                val isLocal = Downloads.isDownloaded(context, track.id)
                                 if (!isAppOnline && !isLocal) { Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show() } else {
                                     currentTrack = track; originalQueue = queue
                                     playQueue = if (isShuffle) { listOf(track) + queue.filter { it.id != track.id }.shuffled() } else { queue }
@@ -2362,7 +2404,7 @@ fun HearonApp(
                                 }
                             },
                             onOptionsClick = { track, pIdx, tIdx -> trackOptionsMenu = TrackMenuData(track, pIdx, tIdx) },
-                            onClearCache = { showCacheWarning = true }, onRefresh = onRefresh
+                            onClearCache = { showCacheWarning = true }, onRefresh = onRefresh, onMix = playMix
                         )
                     }
                     3 -> {
@@ -2372,7 +2414,7 @@ fun HearonApp(
                             onDynamicColorToggle = onDynamicColorToggle, onClearCache = { showCacheWarning = true }, lang = lang,
                             onClearHistory = {
                                 recentlyPlayed.clear()
-                                prefs.edit().putStringSet("recent_tracks_data", emptySet()).apply()
+                                Storage.saveTracks(prefs, "recent_json", recentlyPlayed)
                                 Toast.makeText(context, L.get("history_cleared", lang), Toast.LENGTH_SHORT).show()
                             },
                             onLangChange = onLangChange
@@ -2406,7 +2448,7 @@ fun HearonApp(
                         scope.launch {
                             when (tabIndex) {
                                 0 -> {
-                                    isLoading = true; tracks = HearonBackend.search("Éxitos Globales"); isLoading = false
+                                    isLoading = true; tracks = HearonBackend.trending(); isLoading = false
                                     val lastId = recentlyPlayed.firstOrNull()?.id
                                     if (lastId != null && isOnline(context)) {
                                         isLoadingForYou = true; forYouTracks = HearonBackend.getUpNext(lastId).filter { it.id != lastId }; isLoadingForYou = false
@@ -2482,39 +2524,26 @@ private suspend fun playTrack(track: YtTrack, player: Player?, context: Context,
     if (player == null) { return }
     if (player.currentMediaItem?.mediaId == track.id && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING)) { return }
 
-    val downloadDir = File(context.filesDir, "hearon_downloads")
-    if (!downloadDir.exists()) { downloadDir.mkdirs() }
-    val file = File(downloadDir, "${track.id}.m4a")
+    val file = Downloads.file(context, track.id)
 
-    if (file.exists() && file.length() < 50_000) { file.delete() }
-    val isLocal = file.exists() && file.length() >= 50_000
+    if (file.exists() && file.length() < Downloads.MIN_VALID_SIZE) { file.delete() }
+    val isLocal = Downloads.isDownloaded(context, track.id)
 
     val streamUrl = if (isLocal) { Uri.fromFile(file).toString() } else { com.clio.hearon.api.YtMusicApi.getStreamUrl(track.id) }
 
     if (streamUrl != null) {
         val mime = if (isLocal) { MimeTypes.AUDIO_MP4 } else if (streamUrl.contains("webm")) { MimeTypes.AUDIO_WEBM } else { MimeTypes.AUDIO_MP4 }
-        val mediaItem = MediaItem.Builder().setUri(streamUrl).setMediaId(track.id).setMimeType(mime).setMediaMetadata(MediaMetadata.Builder().setTitle(track.title).setArtist(track.artist).setArtworkUri(Uri.parse(track.coverUrl)).build()).build()
+        val mediaItem = MediaItem.Builder().setUri(streamUrl).setMediaId(track.id).setMimeType(mime).setMediaMetadata(MediaMetadata.Builder().setTitle(track.title).setArtist(track.artist).setArtworkUri(Uri.parse(coverFor(track, 544, prefs))).build()).build()
 
         withContext(Dispatchers.Main) { player.stop(); player.clearMediaItems(); player.setMediaItem(mediaItem); player.prepare(); player.play() }
 
         if (!isLocal && isOnline(context)) {
+            // Invisible cache: keep a copy of every played track for offline use.
             GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    val conn = URL(streamUrl).openConnection() as HttpURLConnection
-                    conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-                    conn.connect()
-
-                    if (conn.responseCode in 200..299) {
-                        val tmpFile = File(downloadDir, "${track.id}.tmp")
-                        tmpFile.outputStream().use { out -> conn.inputStream.use { it.copyTo(out) } }
-                        if (tmpFile.exists() && tmpFile.length() >= 50_000) {
-                            tmpFile.renameTo(file)
-                            val raw = prefs.getStringSet("cached_tracks_data", emptySet())?.toMutableSet() ?: mutableSetOf()
-                            raw.add("${track.id}|||${track.title}|||${track.artist}|||${track.coverUrl}")
-                            prefs.edit().putStringSet("cached_tracks_data", raw).apply()
-                        } else { tmpFile.delete() }
-                    }
-                } catch (e: Exception) { }
+                if (Downloads.download(context, track)) {
+                    val list = Storage.loadTracks(prefs, "downloads_json", "cached_tracks_data")
+                    if (list.none { it.id == track.id }) Storage.saveTracks(prefs, "downloads_json", listOf(track) + list)
+                }
             }
         }
     } else {
@@ -2551,7 +2580,7 @@ fun ExpressiveFullScreenPlayer(
 
     val repeatIcon = when (repeatMode) { Player.REPEAT_MODE_ONE -> Icons.Default.RepeatOne; Player.REPEAT_MODE_ALL -> Icons.Default.RepeatOn; else -> Icons.Default.Repeat }
     val repeatBg = if (repeatMode != Player.REPEAT_MODE_OFF) { MaterialTheme.colorScheme.secondaryContainer } else { MaterialTheme.colorScheme.surfaceContainerHigh }
-    val customCover = remember(track.id, coverUpdateTrigger) { prefs.getString("custom_cover_${track.id}", track.coverUrl) }
+    val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 1080, prefs) }
 
     var dragOffset by remember { mutableFloatStateOf(0f) }
     val offsetY by animateFloatAsState(targetValue = dragOffset, label = "")
@@ -2770,7 +2799,7 @@ fun QueueScreen(
         LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
             itemsIndexed(queue) { index, track ->
                 val active = index == currentIndex
-                val customCover = remember(track.id, coverUpdateTrigger) { prefs.getString("custom_cover_${track.id}", track.coverUrl.replace("w1080-h1080", "w226-h226")) }
+                val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 226, prefs) }
                 Row(modifier = Modifier.fillMaxWidth().animateContentSize().background(if (active) { MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) } else { Color.Transparent }).clickable { onSelect(index) }.padding(horizontal = 24.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentScale = ContentScale.Crop)
                     Spacer(modifier = Modifier.width(16.dp))
@@ -2788,7 +2817,7 @@ fun QueueScreen(
 @Composable
 fun LibraryScreen(
     likedTracks: List<YtTrack>, playlists: MutableList<Playlist>, downloadedTracks: List<YtTrack>, currentId: String?, coverUpdateTrigger: Int, lang: String,
-    onCreatePlaylist: (String) -> Unit, onDeletePlaylist: (Int) -> Unit, onRenamePlaylist: (Int, String) -> Unit, onSelectTrack: (YtTrack, List<YtTrack>, Int) -> Unit, onOptionsClick: (YtTrack, Int?, Int?) -> Unit, onClearCache: () -> Unit, onRefresh: () -> Unit
+    onCreatePlaylist: (String) -> Unit, onDeletePlaylist: (Int) -> Unit, onRenamePlaylist: (Int, String) -> Unit, onSelectTrack: (YtTrack, List<YtTrack>, Int) -> Unit, onOptionsClick: (YtTrack, Int?, Int?) -> Unit, onClearCache: () -> Unit, onRefresh: () -> Unit, onMix: (List<YtTrack>) -> Unit
 ) {
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
     var libraryTab by remember { mutableStateOf("Favoritos") }
@@ -2826,6 +2855,16 @@ fun LibraryScreen(
                     }
                     LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 320.dp), contentPadding = PaddingValues(bottom = 200.dp), modifier = Modifier.fillMaxSize()) {
                         val pIndex = playlists.indexOf(playlistToOpen)
+                        if (playlistToOpen.tracks.isNotEmpty()) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Button(onClick = { onSelectTrack(playlistToOpen.tracks.first(), playlistToOpen.tracks, 0) }, modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 8.dp)) {
+                                        Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(L.get("play_all", lang))
+                                    }
+                                    MixButton(lang, Modifier.padding(vertical = 8.dp)) { onMix(playlistToOpen.tracks) }
+                                }
+                            }
+                        }
                         itemsIndexed(playlistToOpen.tracks) { i, track -> ExpressiveTrackRow(t = track, active = track.id == currentId, coverUpdateTrigger = coverUpdateTrigger, onClick = { onSelectTrack(track, playlistToOpen.tracks, i) }, onOptionsClick = { onOptionsClick(track, pIndex, i) }) }
                     }
                 }
@@ -2835,14 +2874,26 @@ fun LibraryScreen(
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         ExpressiveChip(selected = libraryTab == "Favoritos", text = L.get("favorites", lang), onClick = { libraryTab = "Favoritos" })
                         ExpressiveChip(selected = libraryTab == "Playlists", text = L.get("playlists", lang), onClick = { libraryTab = "Playlists" })
+                        ExpressiveChip(selected = libraryTab == "Descargas", text = L.get("downloads", lang), onClick = { libraryTab = "Descargas" })
                     }
                     when (libraryTab) {
+                        "Descargas" -> {
+                            if (downloadedTracks.isEmpty()) {
+                                LazyColumn(modifier = Modifier.fillMaxSize()) { item { Box(modifier = Modifier.fillParentMaxSize().padding(vertical = 100.dp), contentAlignment = Alignment.Center) { Text(L.get("no_downloads_yet", lang), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
+                            } else {
+                                LazyColumn(contentPadding = PaddingValues(bottom = 200.dp), modifier = Modifier.fillMaxSize()) {
+                                    item { MixButton(lang) { onMix(downloadedTracks) } }
+                                    itemsIndexed(downloadedTracks) { i, track -> ExpressiveTrackRow(t = track, active = track.id == currentId, coverUpdateTrigger = coverUpdateTrigger, onClick = { onSelectTrack(track, downloadedTracks, i) }, onOptionsClick = { onOptionsClick(track, null, null) }) }
+                                }
+                            }
+                        }
                         "Favoritos" -> {
                             if (likedTracks.isEmpty()) { LazyColumn(modifier = Modifier.fillMaxSize()) { item { Box(modifier = Modifier.fillParentMaxSize().padding(vertical = 100.dp), contentAlignment = Alignment.Center) { Text(L.get("no_favorites_yet", lang), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) } } } } else {
                                 LazyVerticalGrid(columns = GridCells.Adaptive(160.dp), contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 200.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxSize()) {
+                                    item(span = { GridItemSpan(maxLineSpan) }) { MixButton(lang, Modifier.padding(0.dp)) { onMix(likedTracks) } }
                                     itemsIndexed(likedTracks) { i, track ->
                                         val isActive = track.id == currentId
-                                        val customCover = remember(track.id, coverUpdateTrigger) { prefs.getString("custom_cover_${track.id}", track.coverUrl.replace("w1080-h1080", "w226-h226")) }
+                                        val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 226, prefs) }
                                         Surface(modifier = Modifier.fillMaxWidth().aspectRatio(0.8f), shape = RoundedCornerShape(16.dp), color = if (isActive) { MaterialTheme.colorScheme.secondaryContainer } else { MaterialTheme.colorScheme.surfaceContainerHigh }, onClick = { onSelectTrack(track, likedTracks, i) }) {
                                             Column(modifier = Modifier.fillMaxSize()) {
                                                 Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -2874,9 +2925,7 @@ fun LibraryScreen(
                                     Surface(modifier = Modifier.fillMaxWidth().aspectRatio(0.8f), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, onClick = { playlistToOpenName = playlist.name }) {
                                         Column(modifier = Modifier.fillMaxSize()) {
                                             Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                                                val firstTrack = playlist.tracks.firstOrNull()
-                                                val customCover = remember(firstTrack?.id, coverUpdateTrigger) { firstTrack?.let { prefs.getString("custom_cover_${it.id}", it.coverUrl.replace("w1080-h1080", "w226-h226")) } }
-                                                if (customCover != null) { AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop) } else { Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) { Icon(Icons.Default.QueueMusic, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer) } }
+                                                PlaylistCover(tracks = playlist.tracks, coverUpdateTrigger = coverUpdateTrigger, modifier = Modifier.fillMaxSize())
                                                 Row(modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                                                     IconButton(onClick = { renamePlaylistIndex = index; renamePlaylistName = playlist.name }, modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), CircleShape).size(32.dp)) { Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface) }
                                                     Spacer(modifier = Modifier.width(4.dp))
@@ -2896,6 +2945,15 @@ fun LibraryScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MixButton(lang: String, modifier: Modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), onClick: () -> Unit) {
+    FilledTonalButton(onClick = onClick, modifier = modifier) {
+        Icon(Icons.Default.Shuffle, null)
+        Spacer(Modifier.width(8.dp))
+        Text(L.get("mix", lang))
     }
 }
 
@@ -2920,7 +2978,7 @@ fun ExpressiveMiniPlayer(
     track: YtTrack, isPlaying: Boolean, coverUpdateTrigger: Int, onPlayPause: () -> Unit, onNext: () -> Unit, onExpand: () -> Unit
 ) {
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
-    val customCover = remember(track.id, coverUpdateTrigger) { prefs.getString("custom_cover_${track.id}", track.coverUrl.replace("w1080-h1080", "w226-h226")) }
+    val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 226, prefs) }
     val ppRadius by animateDpAsState(targetValue = if (isPlaying) { 16.dp } else { 26.dp }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow), label = "MiniPPRadius")
 
     Surface(modifier = Modifier.fillMaxWidth(0.95f).height(72.dp).clip(RoundedCornerShape(36.dp)).clickable { onExpand() }, tonalElevation = 8.dp, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
@@ -2941,12 +2999,32 @@ fun ExpressiveMiniPlayer(
     }
 }
 
+/** 2×2 collage of the first four different covers, or a single cover for short playlists. */
+@Composable
+fun PlaylistCover(tracks: List<YtTrack>, coverUpdateTrigger: Int, modifier: Modifier = Modifier) {
+    val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
+    val covers = remember(tracks, coverUpdateTrigger) { tracks.distinctBy { it.coverUrl }.take(4).map { coverFor(it, 226, prefs) } }
+    Box(modifier = modifier.background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
+        when {
+            covers.isEmpty() -> Icon(Icons.Default.QueueMusic, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            covers.size < 4 -> AsyncImage(model = coverFor(tracks.first(), 544, prefs), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            else -> Column(modifier = Modifier.fillMaxSize()) {
+                listOf(covers.take(2), covers.drop(2)).forEach { row ->
+                    Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        row.forEach { AsyncImage(model = it, contentDescription = null, modifier = Modifier.weight(1f).fillMaxHeight(), contentScale = ContentScale.Crop) }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun ExpressiveTrackRow(
     t: YtTrack, active: Boolean, coverUpdateTrigger: Int, onClick: () -> Unit, onOptionsClick: () -> Unit
 ) {
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
-    val customCover = remember(t.id, coverUpdateTrigger) { prefs.getString("custom_cover_${t.id}", t.coverUrl.replace("w1080-h1080", "w226-h226")) }
+    val customCover = remember(t.id, coverUpdateTrigger) { coverFor(t, 226, prefs) }
 
     Row(modifier = Modifier.fillMaxWidth().animateContentSize().background(if (active) { MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f) } else { Color.Transparent }).clickable { onClick() }.padding(horizontal = 24.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentScale = ContentScale.Crop)
@@ -3050,6 +3128,13 @@ fun SearchScreen(
             }
         }
     }
+}
+
+@OptIn(coil.annotation.ExperimentalCoilApi::class)
+fun clearCoverCache(context: Context) {
+    val loader = coil.Coil.imageLoader(context)
+    loader.memoryCache?.clear()
+    loader.diskCache?.clear()
 }
 
 @Composable
@@ -3231,7 +3316,7 @@ fun SettingsScreen(
                             SettingItemRow(Icons.Default.DeleteSweep, L.get("clear_audio_cache", lang), L.get("clear_audio_cache_desc", lang), { onClearCache() })
                             SettingsHeader(L.get("images_and_data", lang))
                             SettingSliderRow(Icons.Default.ImageSearch, L.get("cover_limit", lang), maxImgCache, 128f..1024f, java.lang.String.format(java.util.Locale.US, "%.0f MB", maxImgCache), true) { maxImgCache = it; prefs.edit().putFloat("max_img_cache", it).apply() }
-                            SettingItemRow(Icons.Default.DeleteOutline, L.get("clear_covers", lang), L.get("clear_covers_desc", lang), { })
+                            SettingItemRow(Icons.Default.DeleteOutline, L.get("clear_covers", lang), L.get("clear_covers_desc", lang), { clearCoverCache(context) })
                             SettingItemRow(Icons.Default.Info, L.get("data_saver", lang), L.get("data_saver_desc", lang), { dataSaver = !dataSaver; prefs.edit().putBoolean("data_saver", dataSaver).apply() }) { Switch(checked = dataSaver, onCheckedChange = null) }
                             SettingsHeader(L.get("clear_history", lang))
                             SettingItemRow(Icons.Default.History, L.get("clear_history", lang), L.get("clear_history_desc", lang), { onClearHistory() })
@@ -3344,6 +3429,66 @@ object HearonBackend {
             }
         } catch (e: Exception) {}
         list
+    }
+
+    private fun browse(browseId: String): JSONObject? {
+        val conn = URL("https://music.youtube.com/youtubei/v1/browse?prettyPrint=false").openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+        conn.doOutput = true
+        val body = JSONObject().put("browseId", browseId).put("context", JSONObject().put("client", JSONObject().put("clientName", "WEB_REMIX").put("clientVersion", "1.20260315.01.00")))
+        conn.outputStream.write(body.toString().toByteArray())
+        return if (conn.responseCode == 200) JSONObject(conn.inputStream.bufferedReader().readText()) else null
+    }
+
+    /** Calls [visit] for every (key, value) pair in the JSON tree, in document order. */
+    private fun walk(node: Any?, visit: (String, Any?) -> Unit) {
+        when (node) {
+            is JSONObject -> node.keys().forEach { k -> val v = node.opt(k); visit(k, v); walk(v, visit) }
+            is JSONArray -> for (i in 0 until node.length()) walk(node.opt(i), visit)
+        }
+    }
+
+    private fun listItems(json: JSONObject): List<YtTrack> {
+        val list = mutableListOf<YtTrack>()
+        walk(json) { key, value ->
+            if (key != "musicResponsiveListItemRenderer" || value !is JSONObject) return@walk
+            val flex = value.optJSONArray("flexColumns")
+            val title = flex?.optJSONObject(0)?.optJSONObject("musicResponsiveListItemFlexColumnRenderer")?.optJSONObject("text")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text") ?: return@walk
+            val artist = flex.optJSONObject(1)?.optJSONObject("musicResponsiveListItemFlexColumnRenderer")?.optJSONObject("text")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text") ?: "Unknown"
+            val id = value.optJSONObject("playlistItemData")?.optString("videoId")?.takeIf { it.isNotEmpty() } ?: return@walk
+            val th = value.optJSONObject("thumbnail")?.optJSONObject("musicThumbnailRenderer")?.optJSONObject("thumbnail")?.optJSONArray("thumbnails")
+            val cover = th?.optJSONObject(th.length() - 1)?.optString("url") ?: ""
+            list.add(YtTrack(id, title, artist, cover))
+        }
+        return list.distinctBy { it.id }
+    }
+
+    /**
+     * Trending: the YouTube Music charts for the user's region. The charts page
+     * links to playlists ("Trending 20 <country>", "Daily Top Music Videos")
+     * whose songs are read here. Before, the app searched "Éxitos Globales",
+     * which returns all-time hits.
+     */
+    suspend fun trending(): List<YtTrack> = withContext(Dispatchers.IO) {
+        try {
+            val charts = browse("FEmusic_charts")
+            if (charts != null) {
+                val ids = mutableListOf<Pair<String, String>>()
+                walk(charts) { key, value ->
+                    if (key != "musicTwoRowItemRenderer" || value !is JSONObject) return@walk
+                    val id = value.optJSONObject("navigationEndpoint")?.optJSONObject("browseEndpoint")?.optString("browseId") ?: return@walk
+                    if (!id.startsWith("VL")) return@walk
+                    val title = value.optJSONObject("title")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text") ?: ""
+                    ids.add(title to id)
+                }
+                val ordered = ids.sortedByDescending { it.first.contains("Trending") }.take(2)
+                val tracks = ordered.flatMap { (_, id) -> browse(id)?.let(::listItems) ?: emptyList() }.distinctBy { it.id }
+                if (tracks.size >= 10) return@withContext tracks
+            }
+        } catch (e: Exception) {}
+        search("top hits ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)}")
     }
 
     suspend fun getUpNext(vId: String): List<YtTrack> = withContext(Dispatchers.IO) {
