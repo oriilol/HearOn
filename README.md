@@ -104,5 +104,5 @@ Found something broken? [Open an issue](https://github.com/oriilol/HearOn/issues
 HearOn is an independent project and is not affiliated with, endorsed by or sponsored by YouTube or Google. It is intended for personal use; please respect the rights of artists and content owners.
 
 <div align="center">
-<sub>Made with ❤️ in 🇪🇸 by <a href="https://github.com/oriilol">oriilol</a></sub>
+<sub>Made with ❤️ in 🇪🇸 by <a href="https://github.com/oriilol">oriilol</a> Note: Project is AI-assisted since v1.3.0.</sub>
 </div>
