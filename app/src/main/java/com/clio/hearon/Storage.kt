@@ -45,7 +45,7 @@ object Storage {
                 val arr = JSONArray(raw)
                 (0 until arr.length()).map {
                     val o = arr.getJSONObject(it)
-                    Playlist(o.getString("name"), tracksFromJson(o.getJSONArray("tracks").toString()))
+                    Playlist(o.getString("name"), tracksFromJson(o.getJSONArray("tracks").toString()), o.optString("cover").takeIf { c -> c.isNotEmpty() })
                 }
             }.getOrDefault(emptyList())
         }
@@ -61,7 +61,7 @@ object Storage {
 
     fun savePlaylists(prefs: SharedPreferences, list: List<Playlist>) {
         val arr = JSONArray()
-        list.forEach { p -> arr.put(JSONObject().put("name", p.name).put("tracks", JSONArray(tracksToJson(p.tracks)))) }
+        list.forEach { p -> arr.put(JSONObject().put("name", p.name).put("tracks", JSONArray(tracksToJson(p.tracks))).apply { p.cover?.let { put("cover", it) } }) }
         prefs.edit().putString("playlists_json", arr.toString()).apply()
     }
 }
