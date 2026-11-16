@@ -143,12 +143,13 @@ struct PlayerScreen: View {
                 }
             }
 
-            GlassEffectContainer(spacing: 16) {
-                HStack(spacing: 16) {
+            GlassEffectContainer(spacing: 10) {
+                HStack(spacing: 10) {
                     toggle("quote.bubble", active: page == .lyrics) { page = .lyrics }
                     toggle("shuffle", active: player.isShuffle) { player.toggleShuffle() }
                     toggle(player.repeatMode == .one ? "repeat.1" : "repeat", active: player.repeatMode != .off) { player.cycleRepeat() }
                     toggle("list.bullet", active: page == .queue) { page = .queue }
+                    SleepTimerMenu()
                 }
             }
         }
@@ -156,7 +157,7 @@ struct PlayerScreen: View {
 
     private func toggle(_ icon: String, active: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.title3).frame(width: 52, height: 44)
+            Image(systemName: icon).font(.title3).frame(width: 36, height: 40)
         }
         .buttonStyle(.glass)
         .tint(active ? (player.accentColor ?? .accentColor) : .secondary)
@@ -170,7 +171,7 @@ struct ProgressSlider: View {
     var body: some View {
         VStack(spacing: 4) {
             Slider(
-                value: Binding(get: { scrubbing ?? player.position }, set: { scrubbing = $0 }),
+                value: Binding(get: { scrubbing ?? (player.duration > 0 ? player.position : 0) }, set: { scrubbing = $0 }),
                 in: 0...max(player.duration, 1),
                 onEditingChanged: { editing in
                     if !editing, let s = scrubbing { player.seek(to: s); scrubbing = nil }
@@ -340,17 +341,56 @@ struct QueueView: View {
             .padding()
 
             ScrollViewReader { proxy in
+                // Drag to reorder (long press) and swipe to remove; the playing
+                // track can't be removed.
                 List {
                     ForEach(Array(player.queue.enumerated()), id: \.offset) { i, track in
-                        TrackRow(track: track) { player.playFromQueue(i) }
+                        TrackRow(track: track, longPressMenu: false) { player.playFromQueue(i) }
                             .listRowBackground(i == player.index ? Color.accentColor.opacity(0.15) : Color.clear)
+                            .opacity(i < player.index ? 0.5 : 1)
+                            .deleteDisabled(i == player.index)
                             .id(i)
                     }
+                    .onMove { player.moveInQueue(from: $0, to: $1) }
+                    .onDelete { player.removeFromQueue(at: $0) }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .onAppear { proxy.scrollTo(player.index, anchor: .top) }
             }
         }
+    }
+}
+
+/// Moon button in the player: 15/30/45/60 min, end of song, or off.
+struct SleepTimerMenu: View {
+    private let player = PlayerController.shared
+
+    var body: some View {
+        let active = player.sleepTimer != .off
+        Menu {
+            ForEach([15, 30, 45, 60], id: \.self) { m in
+                Button("\(m) min") { player.setSleepTimer(.minutes(m)) }
+            }
+            Button(t("end_of_track"), systemImage: "music.note") { player.setSleepTimer(.endOfTrack) }
+            if active {
+                Divider()
+                Button(t("turn_off"), systemImage: "xmark", role: .destructive) { player.setSleepTimer(.off) }
+            }
+        } label: {
+            Group {
+                if let end = player.sleepEnd {
+                    Text(timerInterval: Date.now...end, countsDown: true)
+                        .appFont(.caption2, .semibold).monospacedDigit()
+                        .minimumScaleFactor(0.7)
+                        .frame(width: 36, height: 40)
+                } else {
+                    Image(systemName: active ? "moon.zzz.fill" : "moon.zzz").font(.title3).frame(width: 36, height: 40)
+                }
+            }
+            .foregroundStyle(active ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
+        }
+        .buttonStyle(.glass)
+        .accessibilityLabel(t("sleep_timer"))
     }
 }

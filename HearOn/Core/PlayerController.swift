@@ -36,6 +36,13 @@ final class PlayerController {
     /// twice their length in the header, which AVFoundation trusts.
     private var realDuration: Double?
     private var endHandled = false
+    /// Position to start from when resuming the session saved on the last run.
+    private var pendingResume: Double?
+    private var lastSave = Date.distantPast
+
+    enum SleepTimer: Equatable { case off, minutes(Int), endOfTrack }
+    private(set) var sleepTimer: SleepTimer = .off
+    private(set) var sleepEnd: Date?
 
     var hasNext: Bool { index < queue.count - 1 || (repeatMode == .all && !queue.isEmpty) }
     var hasPrev: Bool { position > 3 || index > 0 }
@@ -59,6 +66,7 @@ final class PlayerController {
         }
         monitor.start(queue: DispatchQueue(label: "net"))
         setupRemoteCommands()
+        restoreState()
     }
 
     // MARK: - Starting playback
@@ -126,6 +134,12 @@ final class PlayerController {
     // MARK: - Controls
 
     func togglePlayPause() {
+        // First play after launching: load the restored track where it was left.
+        if !isPlaying, player.currentItem == nil, let current {
+            load(current, startAt: pendingResume)
+            pendingResume = nil
+            return
+        }
         if isPlaying { player.pause() } else { player.play() }
         isPlaying.toggle()
         updateNowPlaying()
@@ -166,6 +180,100 @@ final class PlayerController {
 
     func cycleRepeat() { repeatMode = repeatMode.next }
 
+    // MARK: - Queue editing
+
+    /// Inserts `track` right after the current one.
+    func playNext(_ track: Track) {
+        guard current != nil else { playRadio(track); return }
+        queue.insert(track, at: min(index + 1, queue.count))
+        originalQueue = queue
+        toast = L.get("will_play_next", AppSettings.shared.lang)
+        saveState()
+    }
+
+    func addToQueue(_ track: Track) {
+        guard current != nil else { playRadio(track); return }
+        queue.append(track)
+        originalQueue = queue
+        toast = L.get("added_to_queue", AppSettings.shared.lang)
+        saveState()
+    }
+
+    func moveInQueue(from offsets: IndexSet, to destination: Int) {
+        var order = Array(queue.indices)
+        order.move(fromOffsets: offsets, toOffset: destination)
+        queue = order.map { queue[$0] }
+        index = order.firstIndex(of: index) ?? index
+        originalQueue = queue
+        saveState()
+    }
+
+    /// Removes tracks from the queue; the one playing is never removed.
+    func removeFromQueue(at offsets: IndexSet) {
+        let removable = offsets.filter { $0 != index }
+        let before = removable.filter { $0 < index }.count
+        queue.remove(atOffsets: IndexSet(removable))
+        index -= before
+        originalQueue = queue
+        saveState()
+    }
+
+    // MARK: - Sleep timer
+
+    func setSleepTimer(_ timer: SleepTimer) {
+        sleepTimer = timer
+        switch timer {
+        case .minutes(let m):
+            sleepEnd = .now.addingTimeInterval(Double(m) * 60)
+            toast = String(format: L.get("sleep_in", AppSettings.shared.lang), "\(m) min")
+        case .endOfTrack:
+            sleepEnd = nil
+            toast = L.get("sleep_end_of_track", AppSettings.shared.lang)
+        case .off:
+            sleepEnd = nil
+        }
+    }
+
+    // MARK: - Resume where you left off
+
+    private struct SavedSession: Codable {
+        var queue: [Track]
+        var index: Int
+        var position: Double
+        var isShuffle: Bool
+        var repeatMode: RepeatMode
+        var duration: Double?
+    }
+
+    private static let sessionURL = LibraryStore.supportDir.appending(path: "session.json")
+
+    func saveState() {
+        lastSave = .now
+        guard current != nil, queue.indices.contains(index) else { return }
+        let session = SavedSession(queue: queue, index: index, position: position, isShuffle: isShuffle, repeatMode: repeatMode, duration: duration)
+        if let data = try? JSONEncoder().encode(session) { try? data.write(to: Self.sessionURL, options: .atomic) }
+    }
+
+    private func restoreState() {
+        guard let data = try? Data(contentsOf: Self.sessionURL),
+              let s = try? JSONDecoder().decode(SavedSession.self, from: data),
+              s.queue.indices.contains(s.index) else { return }
+        queue = s.queue
+        originalQueue = s.queue
+        index = s.index
+        current = s.queue[s.index]
+        position = s.position
+        duration = s.duration ?? 0
+        if duration == 0, DownloadManager.shared.isDownloaded(s.queue[s.index].id) {
+            duration = AudioDuration.ofFile(DownloadManager.shared.fileURL(s.queue[s.index].id)) ?? 0
+        }
+        isShuffle = s.isShuffle
+        repeatMode = s.repeatMode
+        pendingResume = s.position
+        if let t = current { updateAccentColor(t) }
+        updateNowPlaying()
+    }
+
     // MARK: - Internals
 
     private func move(to i: Int) {
@@ -183,7 +291,7 @@ final class PlayerController {
         return false
     }
 
-    private func load(_ track: Track) {
+    private func load(_ track: Track, startAt: Double? = nil) {
         current = track
         position = 0
         duration = 0
@@ -209,6 +317,10 @@ final class PlayerController {
             }
             try? AVAudioSession.sharedInstance().setActive(true)
             player.replaceCurrentItem(with: makeItem(url, track: track, local: local))
+            if let startAt, startAt > 1 {
+                await player.seek(to: CMTime(seconds: startAt, preferredTimescale: 600))
+                position = startAt
+            }
             player.volume = AppSettings.shared.crossfadeEnabled ? 0 : 1
             player.play()
             isPlaying = true
@@ -216,6 +328,7 @@ final class PlayerController {
             if !local { DownloadManager.shared.download(track) }
             prefetchNext()
             updateNowPlaying()
+            saveState()
         }
     }
 
@@ -247,6 +360,13 @@ final class PlayerController {
     }
 
     private func itemEnded() {
+        if sleepTimer == .endOfTrack {
+            player.pause()
+            isPlaying = false
+            setSleepTimer(.off)
+            updateNowPlaying()
+            return
+        }
         if repeatMode == .one {
             seek(to: 0)
         } else if hasNext {
@@ -267,6 +387,11 @@ final class PlayerController {
         }
         // The item doesn't end on its own until the (wrong) header duration, so
         // move on when the real audio is over.
+        if let sleepEnd, Date.now >= sleepEnd, isPlaying {
+            togglePlayPause()
+            setSleepTimer(.off)
+        }
+        if Date.now.timeIntervalSince(lastSave) > 5 { saveState() }
         if let real = realDuration, !endHandled, position >= real - 0.3, isPlaying {
             endHandled = true
             itemEnded()

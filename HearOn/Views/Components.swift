@@ -51,6 +51,8 @@ struct PlaylistCover: View {
 struct TrackRow: View {
     let track: Track
     var playlistContext: (id: UUID, index: Int)? = nil
+    /// Off in reorderable lists, where long-press must start a drag.
+    var longPressMenu = true
     let onTap: () -> Void
 
     private var active: Bool { PlayerController.shared.current?.id == track.id }
@@ -81,7 +83,7 @@ struct TrackRow: View {
                 .contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .contextMenu { TrackMenuItems(track: track, playlistContext: playlistContext) }
+            .contextMenu(longPressMenu ? ContextMenu { TrackMenuItems(track: track, playlistContext: playlistContext) } : nil)
 
             TrackMenu(track: track, playlistContext: playlistContext) {
                 Image(systemName: "ellipsis").frame(width: 32, height: 44).contentShape(.rect)
@@ -110,7 +112,13 @@ struct TrackMenuItems: View {
         let library = LibraryStore.shared
         let downloads = DownloadManager.shared
         let liked = library.isLiked(track)
+        let player = PlayerController.shared
 
+        if player.current != nil, player.current?.id != track.id {
+            Button(t("play_next"), systemImage: "text.line.first.and.arrowtriangle.forward") { player.playNext(track) }
+            Button(t("add_to_queue"), systemImage: "text.line.last.and.arrowtriangle.forward") { player.addToQueue(track) }
+            Divider()
+        }
         Button(liked ? t("remove_favorite") : t("add_favorite"), systemImage: liked ? "heart.slash" : "heart") {
             library.toggleLike(track)
         }

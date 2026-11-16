@@ -7,6 +7,7 @@ struct RootView: View {
     @State private var tab: AppTab = .home
     @State private var ui = UIState.shared
     @Namespace private var playerNS
+    @Environment(\.scenePhase) private var scenePhase
     private let player = PlayerController.shared
     private let settings = AppSettings.shared
 
@@ -30,6 +31,7 @@ struct RootView: View {
             .environment(\.layoutDirection, L.isRTL(settings.lang) ? .rightToLeft : .leftToRight)
             .preferredColorScheme(settings.theme.colorScheme)
             .task { await checkForUpdate() }
+            .onChange(of: scenePhase) { _, phase in if phase != .active { player.saveState() } }
     }
 
     private var tabs: some View {
