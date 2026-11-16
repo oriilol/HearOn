@@ -257,7 +257,7 @@ val PixelFont = FontFamily(
     }
 )
 
-val APP_VERSION = "1.3.0"
+val APP_VERSION = "1.4.0"
 
 /** Google Sans Flex on every style, including the Expressive "emphasized" ones. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
