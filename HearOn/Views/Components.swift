@@ -14,6 +14,8 @@ struct CoverImage: View {
                 AsyncImage(url: track.flatMap { Covers.url($0, size: size) }) { phase in
                     if let image = phase.image {
                         image.resizable().scaledToFill()
+                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                            .clipped()
                     } else {
                         Image(systemName: "music.note").foregroundStyle(.secondary)
                     }
