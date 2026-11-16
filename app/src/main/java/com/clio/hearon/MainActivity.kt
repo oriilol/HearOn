@@ -1,6 +1,7 @@
 @file:OptIn(
     androidx.compose.ui.text.ExperimentalTextApi::class,
     androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
     androidx.media3.common.util.UnstableApi::class
 )
 
@@ -212,6 +213,24 @@ import kotlinx.coroutines.withContext
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.*
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.ui.text.TextStyle
+import com.materialkolor.PaletteStyle
+import com.materialkolor.rememberDynamicColorScheme
+import com.materialkolor.ktx.animateColorScheme
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -220,14 +239,53 @@ import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
 
+/**
+ * Google Sans Flex (variable font). Each weight sets the `wght` axis explicitly;
+ * with a single Font entry every style rendered at the same weight.
+ */
 val PixelFont = FontFamily(
-    Font(resId = R.font.google_sans_flex, variationSettings = FontVariation.Settings(FontVariation.Setting("ROND", 100f)))
+    listOf(FontWeight.Light, FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold, FontWeight.ExtraBold).map { w ->
+        Font(resId = R.font.google_sans_flex, weight = w, variationSettings = FontVariation.Settings(FontVariation.weight(w.weight)))
+    }
 )
 
 val APP_VERSION = "1.3.0"
 
+/** Google Sans Flex on every style, including the Expressive "emphasized" ones. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+val AppTypography: Typography = Typography().let { t ->
+    fun TextStyle.f() = copy(fontFamily = PixelFont)
+    Typography(
+        displayLarge = t.displayLarge.f(), displayMedium = t.displayMedium.f(), displaySmall = t.displaySmall.f(),
+        headlineLarge = t.headlineLarge.f(), headlineMedium = t.headlineMedium.f(), headlineSmall = t.headlineSmall.f(),
+        titleLarge = t.titleLarge.f(), titleMedium = t.titleMedium.f(), titleSmall = t.titleSmall.f(),
+        bodyLarge = t.bodyLarge.f(), bodyMedium = t.bodyMedium.f(), bodySmall = t.bodySmall.f(),
+        labelLarge = t.labelLarge.f(), labelMedium = t.labelMedium.f(), labelSmall = t.labelSmall.f(),
+        displayLargeEmphasized = t.displayLargeEmphasized.f(), displayMediumEmphasized = t.displayMediumEmphasized.f(), displaySmallEmphasized = t.displaySmallEmphasized.f(),
+        headlineLargeEmphasized = t.headlineLargeEmphasized.f(), headlineMediumEmphasized = t.headlineMediumEmphasized.f(), headlineSmallEmphasized = t.headlineSmallEmphasized.f(),
+        titleLargeEmphasized = t.titleLargeEmphasized.f(), titleMediumEmphasized = t.titleMediumEmphasized.f(), titleSmallEmphasized = t.titleSmallEmphasized.f(),
+        bodyLargeEmphasized = t.bodyLargeEmphasized.f(), bodyMediumEmphasized = t.bodyMediumEmphasized.f(), bodySmallEmphasized = t.bodySmallEmphasized.f(),
+        labelLargeEmphasized = t.labelLargeEmphasized.f(), labelMediumEmphasized = t.labelMediumEmphasized.f(), labelSmallEmphasized = t.labelSmallEmphasized.f()
+    )
+}
+
+/**
+ * The theme used to be saved as its translated label ("Oscuro", "Sombre"…),
+ * so only Spanish and English worked. Stored as "System" / "Light" / "Dark" now.
+ */
+fun normalizeTheme(raw: String?): String {
+    if (raw == null) return "System"
+    val langs = listOf("es", "en", "fr", "de", "it", "pt", "ru", "ja", "zh", "hi", "ar")
+    return when {
+        raw == "Dark" || langs.any { L.get("theme_dark", it) == raw } -> "Dark"
+        raw == "Light" || langs.any { L.get("theme_light", it) == raw } -> "Light"
+        else -> "System"
+    }
+}
+
 object L {
     private val es = mapOf(
+        "library" to "Biblioteca",
         "download" to "Descargar",
         "remove_download" to "Quitar descarga",
         "mix" to "Mix",
@@ -345,6 +403,7 @@ object L {
     )
 
     private val en = mapOf(
+        "library" to "Library",
         "download" to "Download",
         "remove_download" to "Remove download",
         "mix" to "Mix",
@@ -462,6 +521,7 @@ object L {
     )
 
     private val fr = mapOf(
+        "library" to "Bibliothèque",
         "download" to "Télécharger",
         "remove_download" to "Supprimer le téléchargement",
         "mix" to "Mix",
@@ -579,6 +639,7 @@ object L {
     )
 
     private val de = mapOf(
+        "library" to "Mediathek",
         "download" to "Herunterladen",
         "remove_download" to "Download entfernen",
         "mix" to "Mix",
@@ -696,6 +757,7 @@ object L {
     )
 
     private val it = mapOf(
+        "library" to "Libreria",
         "download" to "Scarica",
         "remove_download" to "Rimuovi download",
         "mix" to "Mix",
@@ -813,6 +875,7 @@ object L {
     )
 
     private val pt = mapOf(
+        "library" to "Biblioteca",
         "download" to "Transferir",
         "remove_download" to "Remover transferência",
         "mix" to "Mix",
@@ -930,6 +993,7 @@ object L {
     )
 
     private val ru = mapOf(
+        "library" to "Медиатека",
         "download" to "Скачать",
         "remove_download" to "Удалить загрузку",
         "mix" to "Микс",
@@ -1047,6 +1111,7 @@ object L {
     )
 
     private val ja = mapOf(
+        "library" to "ライブラリ",
         "download" to "ダウンロード",
         "remove_download" to "ダウンロードを削除",
         "mix" to "ミックス",
@@ -1164,6 +1229,7 @@ object L {
     )
 
     private val zh = mapOf(
+        "library" to "音乐库",
         "download" to "下载",
         "remove_download" to "删除下载",
         "mix" to "混音",
@@ -1281,6 +1347,7 @@ object L {
     )
 
     private val hi = mapOf(
+        "library" to "लाइब्रेरी",
         "download" to "डाउनलोड करें",
         "remove_download" to "डाउनलोड हटाएँ",
         "mix" to "मिक्स",
@@ -1398,6 +1465,7 @@ object L {
     )
 
     private val ar = mapOf(
+        "library" to "المكتبة",
         "download" to "تنزيل",
         "remove_download" to "إزالة التنزيل",
         "mix" to "مزيج",
@@ -1610,40 +1678,25 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val prefs = context.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
 
-            var themeMode by remember { mutableStateOf(prefs.getString("theme", "System") ?: "System") }
+            var themeMode by remember { mutableStateOf(normalizeTheme(prefs.getString("theme", "System"))) }
             var isDynamicColorEnabled by remember { mutableStateOf(prefs.getBoolean("dynamic_colors", true)) }
             var dominantColor by remember { mutableStateOf<Color?>(null) }
             var appLang by remember { mutableStateOf(prefs.getString("app_lang", "system") ?: "system") }
 
             val isDark = when (themeMode) {
-                "Oscuro", "Dark" -> true
-                "Claro", "Light" -> false
+                "Dark" -> true
+                "Light" -> false
                 else -> isSystemInDarkTheme()
             }
 
-            val baseColorScheme = if (isDark) darkColorScheme() else lightColorScheme()
-            val defaultText = if (isDark) Color.White else Color.Black
-            val defaultTextVariant = if (isDark) Color.LightGray else Color.DarkGray
-
-            val animPrimary by animateColorAsState(targetValue = if (isDynamicColorEnabled && dominantColor != null) dominantColor!! else baseColorScheme.primary, animationSpec = tween(1000), label = "")
-            val animPrimaryContainer by animateColorAsState(targetValue = if (isDynamicColorEnabled && dominantColor != null) dominantColor!!.copy(alpha = if (isDark) 0.4f else 0.3f) else baseColorScheme.primaryContainer, animationSpec = tween(1000), label = "")
-            val animSecondaryContainer by animateColorAsState(targetValue = if (isDynamicColorEnabled && dominantColor != null) dominantColor!!.copy(alpha = if (isDark) 0.2f else 0.15f) else baseColorScheme.secondaryContainer, animationSpec = tween(1000), label = "")
-            val animSurface by animateColorAsState(targetValue = if (isDynamicColorEnabled && dominantColor != null) Color(androidx.core.graphics.ColorUtils.blendARGB(baseColorScheme.surface.toArgb(), dominantColor!!.toArgb(), if (isDark) 0.08f else 0.1f)) else baseColorScheme.surface, animationSpec = tween(1000), label = "")
-            val animSurfaceHigh by animateColorAsState(targetValue = if (isDynamicColorEnabled && dominantColor != null) Color(androidx.core.graphics.ColorUtils.blendARGB(baseColorScheme.surfaceContainerHigh.toArgb(), dominantColor!!.toArgb(), if (isDark) 0.15f else 0.2f)) else baseColorScheme.surfaceContainerHigh, animationSpec = tween(1000), label = "")
-
-            val customColorScheme = baseColorScheme.copy(
-                primary = animPrimary,
-                primaryContainer = animPrimaryContainer,
-                secondaryContainer = animSecondaryContainer,
-                surface = animSurface,
-                surfaceContainerHigh = animSurfaceHigh,
-                surfaceContainer = animSurfaceHigh.copy(alpha = 0.5f),
-                surfaceContainerHighest = animSurfaceHigh.copy(alpha = 0.8f),
-                onPrimaryContainer = defaultText,
-                onSecondaryContainer = defaultText,
-                onSurface = defaultText,
-                onSurfaceVariant = defaultTextVariant
-            )
+            // A full Material 3 palette generated from the cover colour (or the
+            // wallpaper on Android 12+), instead of tinting a few colours by hand.
+            val wallpaperScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            } else null
+            val seed = if (isDynamicColorEnabled) dominantColor else null
+            val coverScheme = rememberDynamicColorScheme(seedColor = seed ?: Color(0xFF6750A4), isDark = isDark, style = PaletteStyle.TonalSpot)
+            val colorScheme = animateColorScheme(if (seed == null && wallpaperScheme != null) wallpaperScheme else coverScheme)
 
             val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
@@ -1655,25 +1708,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            MaterialTheme(
-                colorScheme = customColorScheme,
-                typography = Typography(
-                    displayLarge = MaterialTheme.typography.displayLarge.copy(fontFamily = PixelFont),
-                    displayMedium = MaterialTheme.typography.displayMedium.copy(fontFamily = PixelFont),
-                    displaySmall = MaterialTheme.typography.displaySmall.copy(fontFamily = PixelFont),
-                    headlineLarge = MaterialTheme.typography.headlineLarge.copy(fontFamily = PixelFont),
-                    headlineMedium = MaterialTheme.typography.headlineMedium.copy(fontFamily = PixelFont),
-                    headlineSmall = MaterialTheme.typography.headlineSmall.copy(fontFamily = PixelFont),
-                    titleLarge = MaterialTheme.typography.titleLarge.copy(fontFamily = PixelFont),
-                    titleMedium = MaterialTheme.typography.titleMedium.copy(fontFamily = PixelFont),
-                    titleSmall = MaterialTheme.typography.titleSmall.copy(fontFamily = PixelFont),
-                    bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontFamily = PixelFont),
-                    bodyMedium = MaterialTheme.typography.bodyMedium.copy(fontFamily = PixelFont),
-                    bodySmall = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFont),
-                    labelLarge = MaterialTheme.typography.labelLarge.copy(fontFamily = PixelFont),
-                    labelMedium = MaterialTheme.typography.labelMedium.copy(fontFamily = PixelFont),
-                    labelSmall = MaterialTheme.typography.labelSmall.copy(fontFamily = PixelFont)
-                )
+            MaterialExpressiveTheme(
+                colorScheme = colorScheme,
+                motionScheme = MotionScheme.expressive(),
+                typography = AppTypography
             ) {
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                     HearonApp(
@@ -1710,22 +1748,24 @@ fun AppleMusicDots() {
     }
 }
 
+/** Material 3 Expressive connected button group used for tabs (one option selected). */
 @Composable
-fun ExpressiveChip(selected: Boolean, text: String, icon: ImageVector? = null, onClick: () -> Unit) {
-    val bgColor by animateColorAsState(targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh, label = "")
-    val contentColor by animateColorAsState(targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant, label = "")
-    val scale by animateFloatAsState(targetValue = if (selected) 1.05f else 1f, label = "")
-
-    Surface(
-        modifier = Modifier.scale(scale).clip(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
-        color = bgColor,
-        tonalElevation = if (selected) 8.dp else 2.dp
-    ) {
-        Row(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (icon != null) {
-                Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = contentColor)
+fun ConnectedToggleGroup(options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+        options.forEachIndexed { i, (key, label) ->
+            ToggleButton(
+                checked = selected == key,
+                onCheckedChange = { onSelect(key) },
+                modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
+                shapes = when (i) {
+                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                }
+            ) {
+                if (selected == key) { Icon(Icons.Filled.Check, null, modifier = Modifier.size(ToggleButtonDefaults.IconSize)); Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing)) }
+                Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Text(text = text, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = contentColor)
         }
     }
 }
@@ -2425,7 +2465,7 @@ fun HearonApp(
         }
 
         Column(
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 16.dp, vertical = 32.dp),
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AnimatedVisibility(
@@ -2434,16 +2474,15 @@ fun HearonApp(
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
                 ExpressiveMiniPlayer(
-                    track = currentTrack!!, isPlaying = isPlaying, coverUpdateTrigger = coverUpdateTrigger,
+                    track = currentTrack!!, isPlaying = isPlaying, progress = if (dur > 0) (pos.toFloat() / dur).coerceIn(0f, 1f) else 0f, coverUpdateTrigger = coverUpdateTrigger,
                     onPlayPause = { if (isPlaying) { player?.pause() } else { player?.play() } },
                     onNext = { playNext() },
                     onExpand = { isFullScreen = true; fullScreenState = "PLAYER" }
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
             AnimatedVisibility(visible = !isFullScreen) {
-                FloatingNavBar(
-                    selectedTab = selectedTab, onTabSelected = { selectedTab = it },
+                AppNavigationBar(
+                    selectedTab = selectedTab, lang = lang, onTabSelected = { selectedTab = it },
                     onTabReselected = { tabIndex ->
                         scope.launch {
                             when (tabIndex) {
@@ -2558,13 +2597,9 @@ fun ExpressiveFullScreenPlayer(
 ) {
     BackHandler { onClose() }
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
-    var sliderPos by remember { mutableFloatStateOf(0f) }
-    var isDragging by remember { mutableStateOf(false) }
 
     val coverScale by animateFloatAsState(targetValue = if (isPlaying) { 1f } else { 0.85f }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow), label = "CoverScale")
     val coverRadius by animateDpAsState(targetValue = if (isPlaying) { 48.dp } else { 24.dp }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow), label = "CoverRadius")
-    val ppWidth by animateDpAsState(targetValue = if (isPlaying) { 100.dp } else { 84.dp }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow), label = "PPWidth")
-    val ppRadius by animateDpAsState(targetValue = if (isPlaying) { 32.dp } else { 40.dp }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow), label = "PPRadius")
 
     val isDark = isSystemInDarkTheme()
     val configuration = LocalConfiguration.current
@@ -2578,8 +2613,6 @@ fun ExpressiveFullScreenPlayer(
         )
     )
 
-    val repeatIcon = when (repeatMode) { Player.REPEAT_MODE_ONE -> Icons.Default.RepeatOne; Player.REPEAT_MODE_ALL -> Icons.Default.RepeatOn; else -> Icons.Default.Repeat }
-    val repeatBg = if (repeatMode != Player.REPEAT_MODE_OFF) { MaterialTheme.colorScheme.secondaryContainer } else { MaterialTheme.colorScheme.surfaceContainerHigh }
     val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 1080, prefs) }
 
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -2603,72 +2636,100 @@ fun ExpressiveFullScreenPlayer(
                 Spacer(modifier = Modifier.width(32.dp))
                 Column(modifier = Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        IconButton(onClick = onClose, modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)) { Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        IconButton(onClick = onMenuClick, modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)) { Icon(Icons.Default.MoreVert, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        FilledTonalIconButton(onClick = onClose, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(R.drawable.ms_keyboard_arrow_down), null) }
+                        FilledTonalIconButton(onClick = onMenuClick, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(R.drawable.ms_more_vert), null) }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = track.title, style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = track.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    PlayerTitle(track, isLiked, onLike)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PlayerProgress(pos, dur, onSeek)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Slider(value = if (isDragging) { sliderPos } else { (if (dur > 0) pos.toFloat() / dur else 0f).coerceIn(0f, 1f) }, onValueChange = { isDragging = true; sliderPos = it }, onValueChangeFinished = { isDragging = false; onSeek((sliderPos * dur).toLong()) }, colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(text = formatTime(if (isDragging) { (sliderPos * dur).toLong() } else { pos }), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(text = formatTime(dur), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onPrev, enabled = hasPrev, modifier = Modifier.size(64.dp).background(if (hasPrev) { MaterialTheme.colorScheme.surfaceContainerHighest } else { Color.Transparent }, CircleShape)) { Icon(Icons.Default.SkipPrevious, null, tint = if (hasPrev) { MaterialTheme.colorScheme.onSurface } else { MaterialTheme.colorScheme.onSurface.copy(0.3f) }) }
-                        IconButton(onClick = onPP, modifier = Modifier.width(ppWidth).height(72.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(ppRadius))) { Icon(if (isPlaying) { Icons.Default.Pause } else { Icons.Default.PlayArrow }, null, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                        IconButton(onClick = onNext, enabled = hasNext, modifier = Modifier.size(64.dp).background(if (hasNext) { MaterialTheme.colorScheme.surfaceContainerHighest } else { Color.Transparent }, CircleShape)) { Icon(Icons.Default.SkipNext, null, tint = if (hasNext) { MaterialTheme.colorScheme.onSurface } else { MaterialTheme.colorScheme.onSurface.copy(0.3f) }) }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        IconButton(onClick = onLyrics, modifier = Modifier.size(56.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp))) { Icon(Icons.Default.Lyrics, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        IconButton(onClick = onShuffle, modifier = Modifier.size(56.dp).background(if (isShuffle) { MaterialTheme.colorScheme.secondaryContainer } else { MaterialTheme.colorScheme.surfaceContainerHigh }, RoundedCornerShape(16.dp))) { Icon(Icons.Default.Shuffle, null, tint = if (isShuffle) { MaterialTheme.colorScheme.onSecondaryContainer } else { MaterialTheme.colorScheme.onSurfaceVariant }) }
-                        IconButton(onClick = onRepeat, modifier = Modifier.size(56.dp).background(repeatBg, RoundedCornerShape(16.dp))) { Icon(repeatIcon, null, tint = if (repeatMode != Player.REPEAT_MODE_OFF) { MaterialTheme.colorScheme.onSecondaryContainer } else { MaterialTheme.colorScheme.onSurfaceVariant }) }
-                        IconButton(onClick = onQueue, modifier = Modifier.size(56.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp))) { Icon(Icons.Default.QueueMusic, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    }
+                    PlayerControls(isPlaying, hasPrev, hasNext, isShuffle, repeatMode, onPP, onPrev, onNext, onLyrics, onShuffle, onRepeat, onQueue)
                 }
             }
         } else {
             Column(modifier = Modifier.fillMaxSize().background(gradient).statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                    IconButton(onClick = onClose, modifier = Modifier.align(Alignment.CenterStart).size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)) { Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    FilledTonalIconButton(onClick = onClose, shapes = IconButtonDefaults.shapes(), modifier = Modifier.align(Alignment.CenterStart)) { Icon(painterResource(R.drawable.ms_keyboard_arrow_down), null) }
                     Text(text = L.get("now_playing", lang), modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    IconButton(onClick = onMenuClick, modifier = Modifier.align(Alignment.CenterEnd).size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)) { Icon(Icons.Default.MoreVert, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    FilledTonalIconButton(onClick = onMenuClick, shapes = IconButtonDefaults.shapes(), modifier = Modifier.align(Alignment.CenterEnd)) { Icon(painterResource(R.drawable.ms_more_vert), null) }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 AnimatedContent(targetState = track, transitionSpec = { fadeIn(animationSpec = tween(durationMillis = 500)) + scaleIn(initialScale = 0.8f) togetherWith fadeOut(animationSpec = tween(durationMillis = 500)) + scaleOut(targetScale = 1.2f) }, label = "TrackAnimation") { currentTrack ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.fillMaxWidth(0.92f).aspectRatio(1f).scale(coverScale).clip(RoundedCornerShape(coverRadius)), contentScale = ContentScale.Crop)
-                        Spacer(modifier = Modifier.height(48.dp))
-                        Text(text = currentTrack.title, style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = currentTrack.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
-                Slider(value = if (isDragging) { sliderPos } else { (if (dur > 0) pos.toFloat() / dur else 0f).coerceIn(0f, 1f) }, onValueChange = { isDragging = true; sliderPos = it }, onValueChangeFinished = { isDragging = false; onSeek((sliderPos * dur).toLong()) }, colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = formatTime(if (isDragging) { (sliderPos * dur).toLong() } else { pos }), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = formatTime(dur), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onPrev, enabled = hasPrev, modifier = Modifier.size(72.dp).background(if (hasPrev) { MaterialTheme.colorScheme.surfaceContainerHighest } else { Color.Transparent }, CircleShape)) { Icon(imageVector = Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(32.dp), tint = if (hasPrev) { MaterialTheme.colorScheme.onSurface } else { MaterialTheme.colorScheme.onSurface.copy(0.3f) }) }
-                    IconButton(onClick = onPP, modifier = Modifier.width(ppWidth).height(80.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(ppRadius))) { Icon(imageVector = if (isPlaying) { Icons.Default.Pause } else { Icons.Default.PlayArrow }, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                    IconButton(onClick = onNext, enabled = hasNext, modifier = Modifier.size(72.dp).background(if (hasNext) { MaterialTheme.colorScheme.surfaceContainerHighest } else { Color.Transparent }, CircleShape)) { Icon(imageVector = Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(32.dp), tint = if (hasNext) { MaterialTheme.colorScheme.onSurface } else { MaterialTheme.colorScheme.onSurface.copy(0.3f) }) }
-                }
-                Spacer(modifier = Modifier.height(40.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onLyrics, modifier = Modifier.size(64.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp))) { Icon(Icons.Default.Lyrics, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    IconButton(onClick = onShuffle, modifier = Modifier.size(64.dp).background(if (isShuffle) { MaterialTheme.colorScheme.secondaryContainer } else { MaterialTheme.colorScheme.surfaceContainerHigh }, RoundedCornerShape(16.dp))) { Icon(Icons.Default.Shuffle, null, tint = if (isShuffle) { MaterialTheme.colorScheme.onSecondaryContainer } else { MaterialTheme.colorScheme.onSurfaceVariant }) }
-                    IconButton(onClick = onRepeat, modifier = Modifier.size(64.dp).background(repeatBg, RoundedCornerShape(16.dp))) { Icon(imageVector = repeatIcon, contentDescription = null, tint = if (repeatMode != Player.REPEAT_MODE_OFF) { MaterialTheme.colorScheme.onSecondaryContainer } else { MaterialTheme.colorScheme.onSurfaceVariant }) }
-                    IconButton(onClick = onQueue, modifier = Modifier.size(64.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp))) { Icon(Icons.Default.QueueMusic, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
+                Spacer(modifier = Modifier.height(36.dp))
+                PlayerTitle(track, isLiked, onLike)
+                Spacer(modifier = Modifier.height(20.dp))
+                PlayerProgress(pos, dur, onSeek)
+                Spacer(modifier = Modifier.height(20.dp))
+                PlayerControls(isPlaying, hasPrev, hasNext, isShuffle, repeatMode, onPP, onPrev, onNext, onLyrics, onShuffle, onRepeat, onQueue)
                 Spacer(modifier = Modifier.weight(1f))
             }
+        }
+    }
+}
+
+@Composable
+private fun PlayerTitle(track: YtTrack, isLiked: Boolean, onLike: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = track.title, style = MaterialTheme.typography.headlineSmallEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.basicMarquee())
+            Text(text = track.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        FilledTonalIconToggleButton(checked = isLiked, onCheckedChange = { onLike() }, shapes = IconButtonDefaults.toggleableShapes()) {
+            Icon(painterResource(if (isLiked) R.drawable.ms_favorite_fill1 else R.drawable.ms_favorite), contentDescription = null)
+        }
+    }
+}
+
+@Composable
+private fun PlayerProgress(pos: Long, dur: Long, onSeek: (Long) -> Unit) {
+    var sliderPos by remember { mutableFloatStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    Column {
+        Slider(
+            value = if (isDragging) sliderPos else (if (dur > 0) pos.toFloat() / dur else 0f).coerceIn(0f, 1f),
+            onValueChange = { isDragging = true; sliderPos = it },
+            onValueChangeFinished = { isDragging = false; onSeek((sliderPos * dur).toLong()) }
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = formatTime(if (isDragging) (sliderPos * dur).toLong() else pos), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = formatTime(dur), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * Expressive transport controls: the big play button morphs between round
+ * (paused) and square (playing); shuffle/repeat are toggle buttons.
+ */
+@Composable
+private fun PlayerControls(
+    isPlaying: Boolean, hasPrev: Boolean, hasNext: Boolean, isShuffle: Boolean, repeatMode: Int,
+    onPP: () -> Unit, onPrev: () -> Unit, onNext: () -> Unit, onLyrics: () -> Unit, onShuffle: () -> Unit, onRepeat: () -> Unit, onQueue: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalIconButton(onClick = onPrev, enabled = hasPrev, shapes = IconButtonDefaults.shapes(), modifier = Modifier.size(IconButtonDefaults.mediumContainerSize(IconButtonDefaults.IconButtonWidthOption.Uniform))) {
+                Icon(painterResource(R.drawable.ms_skip_previous_fill1), null, modifier = Modifier.size(IconButtonDefaults.mediumIconSize))
+            }
+            FilledIconToggleButton(checked = isPlaying, onCheckedChange = { onPP() }, shapes = IconButtonDefaults.toggleableShapes(), modifier = Modifier.size(IconButtonDefaults.largeContainerSize(IconButtonDefaults.IconButtonWidthOption.Wide))) {
+                Icon(painterResource(if (isPlaying) R.drawable.ms_pause_fill1 else R.drawable.ms_play_arrow_fill1), null, modifier = Modifier.size(IconButtonDefaults.largeIconSize))
+            }
+            FilledTonalIconButton(onClick = onNext, enabled = hasNext, shapes = IconButtonDefaults.shapes(), modifier = Modifier.size(IconButtonDefaults.mediumContainerSize(IconButtonDefaults.IconButtonWidthOption.Uniform))) {
+                Icon(painterResource(R.drawable.ms_skip_next_fill1), null, modifier = Modifier.size(IconButtonDefaults.mediumIconSize))
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onLyrics, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(R.drawable.ms_lyrics), null) }
+            IconToggleButton(checked = isShuffle, onCheckedChange = { onShuffle() }, shapes = IconButtonDefaults.toggleableShapes(), colors = IconButtonDefaults.iconToggleButtonColors(checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer, checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Icon(painterResource(R.drawable.ms_shuffle), null) }
+            IconToggleButton(checked = repeatMode != Player.REPEAT_MODE_OFF, onCheckedChange = { onRepeat() }, shapes = IconButtonDefaults.toggleableShapes(), colors = IconButtonDefaults.iconToggleButtonColors(checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer, checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer)) {
+                Icon(painterResource(if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.ms_repeat_one else R.drawable.ms_repeat), null)
+            }
+            IconButton(onClick = onQueue, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(R.drawable.ms_queue_music), null) }
         }
     }
 }
@@ -2742,7 +2803,7 @@ fun LyricsScreen(
         }
 
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            if (isLoadingLyrics) { CircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) } else if (syncedLyricsRaw == null && plainLyrics == null) {
+            if (isLoadingLyrics) { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) } else if (syncedLyricsRaw == null && plainLyrics == null) {
                 Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(text = L.get("no_lyrics_found", lang), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(16.dp))
@@ -2871,11 +2932,7 @@ fun LibraryScreen(
             } else {
                 Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
                     Text(text = L.get("your_library", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ExpressiveChip(selected = libraryTab == "Favoritos", text = L.get("favorites", lang), onClick = { libraryTab = "Favoritos" })
-                        ExpressiveChip(selected = libraryTab == "Playlists", text = L.get("playlists", lang), onClick = { libraryTab = "Playlists" })
-                        ExpressiveChip(selected = libraryTab == "Descargas", text = L.get("downloads", lang), onClick = { libraryTab = "Descargas" })
-                    }
+                    ConnectedToggleGroup(listOf("Favoritos" to L.get("favorites", lang), "Playlists" to L.get("playlists", lang), "Descargas" to L.get("downloads", lang)), libraryTab) { libraryTab = it }
                     when (libraryTab) {
                         "Descargas" -> {
                             if (downloadedTracks.isEmpty()) {
@@ -2957,44 +3014,84 @@ fun MixButton(lang: String, modifier: Modifier = Modifier.padding(horizontal = 2
     }
 }
 
+/**
+ * Floating, rounded navigation bar. The selected tab grows into a pill with its
+ * filled icon and label (Material Symbols Rounded), the others show only the outline icon.
+ */
 @Composable
-fun FloatingNavBar(selectedTab: Int, onTabSelected: (Int) -> Unit, onTabReselected: (Int) -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth(0.9f).height(72.dp), shape = RoundedCornerShape(40.dp), tonalElevation = 10.dp, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            val icons = listOf(Icons.Default.Home to 0, Icons.Default.Search to 1, Icons.Default.LibraryMusic to 2, Icons.Default.Settings to 3)
-            val scope = rememberCoroutineScope()
-            icons.forEach { (icon, index) ->
-                val scale = remember { androidx.compose.animation.core.Animatable(1f) }
-                Box(modifier = Modifier.clip(CircleShape).background(if (selectedTab == index) { MaterialTheme.colorScheme.secondaryContainer } else { Color.Transparent }).scale(scale.value).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { scope.launch { scale.animateTo(0.6f, tween(durationMillis = 100)); scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) }; if (selectedTab == index) { onTabReselected(index) } else { onTabSelected(index) } }.padding(horizontal = 20.dp, vertical = 12.dp)) {
-                    Icon(imageVector = icon, contentDescription = null, tint = if (selectedTab == index) { MaterialTheme.colorScheme.onSecondaryContainer } else { MaterialTheme.colorScheme.onSurfaceVariant })
+fun AppNavigationBar(selectedTab: Int, lang: String, onTabSelected: (Int) -> Unit, onTabReselected: (Int) -> Unit) {
+    val items = listOf(
+        Triple(R.drawable.ms_home, R.drawable.ms_home_fill1, "home"),
+        Triple(R.drawable.ms_search, R.drawable.ms_search_fill1, "explore"),
+        Triple(R.drawable.ms_library_music, R.drawable.ms_library_music_fill1, "library"),
+        Triple(R.drawable.ms_settings, R.drawable.ms_settings_fill1, "settings"),
+    )
+    Surface(
+        modifier = Modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp).height(68.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 3.dp
+    ) {
+        Row(modifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            items.forEachIndexed { index, (outlined, filled, key) ->
+                val selected = selectedTab == index
+                val bg by animateColorAsState(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "navBg")
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(bg)
+                        .clickable(role = Role.Tab) { if (selected) onTabReselected(index) else onTabSelected(index) }
+                        .animateContentSize(MaterialTheme.motionScheme.fastSpatialSpec())
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(painterResource(if (selected) filled else outlined), contentDescription = L.get(key, lang), tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (selected) {
+                        Spacer(Modifier.width(8.dp))
+                        Text(L.get(key, lang), style = MaterialTheme.typography.labelLargeEmphasized, color = MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1)
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * Floating mini player: the cover is clipped to an Expressive "cookie" shape that
+ * spins while playing, the play button morphs between round and square, and a
+ * wavy line shows the progress (it flattens when paused).
+ */
 @Composable
 fun ExpressiveMiniPlayer(
-    track: YtTrack, isPlaying: Boolean, coverUpdateTrigger: Int, onPlayPause: () -> Unit, onNext: () -> Unit, onExpand: () -> Unit
+    track: YtTrack, isPlaying: Boolean, progress: Float, coverUpdateTrigger: Int, onPlayPause: () -> Unit, onNext: () -> Unit, onExpand: () -> Unit
 ) {
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
     val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 226, prefs) }
-    val ppRadius by animateDpAsState(targetValue = if (isPlaying) { 16.dp } else { 26.dp }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow), label = "MiniPPRadius")
+    val rotation = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) { rotation.animateTo(rotation.value + 360f, tween(12000, easing = LinearEasing)) }
+    }
+    val cookie = MaterialShapes.Cookie9Sided.toShape()
 
-    Surface(modifier = Modifier.fillMaxWidth(0.95f).height(72.dp).clip(RoundedCornerShape(36.dp)).clickable { onExpand() }, tonalElevation = 8.dp, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
-        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(48.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+    Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, shadowElevation = 3.dp, onClick = onExpand) {
+        Column {
+            Row(modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 8.dp, top = 10.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(48.dp).graphicsLayer { rotationZ = rotation.value }.clip(cookie), contentScale = ContentScale.Crop)
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(text = track.title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
-                    Text(text = track.artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = track.title, style = MaterialTheme.typography.titleMediumEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(text = track.artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
+                FilledIconToggleButton(checked = isPlaying, onCheckedChange = { onPlayPause() }, shapes = IconButtonDefaults.toggleableShapes(), modifier = Modifier.size(48.dp)) {
+                    Icon(painterResource(if (isPlaying) R.drawable.ms_pause_fill1 else R.drawable.ms_play_arrow_fill1), contentDescription = null)
+                }
+                IconButton(onClick = onNext, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(R.drawable.ms_skip_next_fill1), contentDescription = null) }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onPlayPause, modifier = Modifier.size(width = 52.dp, height = 52.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(ppRadius))) { Icon(imageVector = if (isPlaying) { Icons.Default.Pause } else { Icons.Default.PlayArrow }, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                IconButton(onClick = onNext) { Icon(imageVector = Icons.Default.SkipNext, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            }
+            LinearWavyProgressIndicator(
+                progress = { progress },
+                amplitude = { if (isPlaying) 1f else 0f },
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 10.dp)
+            )
         }
     }
 }
@@ -3026,7 +3123,7 @@ fun ExpressiveTrackRow(
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
     val customCover = remember(t.id, coverUpdateTrigger) { coverFor(t, 226, prefs) }
 
-    Row(modifier = Modifier.fillMaxWidth().animateContentSize().background(if (active) { MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f) } else { Color.Transparent }).clickable { onClick() }.padding(horizontal = 24.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().animateContentSize().background(if (active) { MaterialTheme.colorScheme.surfaceContainerHigh } else { Color.Transparent }).clickable { onClick() }.padding(horizontal = 24.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentScale = ContentScale.Crop)
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -3046,14 +3143,10 @@ fun HomeScreen(
     val isListLoading = when(homeTab) { "Tendencias" -> loading; "Para ti" -> loadingForYou; else -> false }
     val state = rememberPullToRefreshState()
 
-    PullToRefreshBox(isRefreshing = isListLoading, onRefresh = onRefresh, state = state, modifier = Modifier.fillMaxSize()) {
+    PullToRefreshBox(isRefreshing = isListLoading, onRefresh = onRefresh, state = state, modifier = Modifier.fillMaxSize(), indicator = { PullToRefreshDefaults.LoadingIndicator(state = state, isRefreshing = isListLoading, modifier = Modifier.align(Alignment.TopCenter)) }) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
             Text(text = L.get("home", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ExpressiveChip(selected = homeTab == "Tendencias", text = L.get("trending", lang), onClick = { homeTab = "Tendencias" })
-                ExpressiveChip(selected = homeTab == "Para ti", text = L.get("for_you", lang), onClick = { homeTab = "Para ti" })
-                ExpressiveChip(selected = homeTab == "Recientes", text = L.get("recent", lang), onClick = { homeTab = "Recientes" })
-            }
+            ConnectedToggleGroup(listOf("Tendencias" to L.get("trending", lang), "Para ti" to L.get("for_you", lang), "Recientes" to L.get("recent", lang)), homeTab) { homeTab = it }
 
             val isOffline = !isOnline(LocalContext.current)
 
@@ -3097,10 +3190,7 @@ fun SearchScreen(
     Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         Text(text = L.get("explore", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
         OutlinedTextField(value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }, shape = RoundedCornerShape(24.dp), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), keyboardActions = KeyboardActions(onSearch = { performSearch() }), colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer))
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ExpressiveChip(selected = searchType == "MUSICA", text = L.get("yt_music", lang), onClick = { searchType = "MUSICA"; if (query.isNotBlank()) { performSearch() } })
-            ExpressiveChip(selected = searchType == "VIDEO", text = L.get("youtube", lang), onClick = { searchType = "VIDEO"; if (query.isNotBlank()) { performSearch() } })
-        }
+        ConnectedToggleGroup(listOf("MUSICA" to L.get("yt_music", lang), "VIDEO" to L.get("youtube", lang)), searchType) { searchType = it; if (query.isNotBlank()) { performSearch() } }
 
         val isOffline = !isOnline(LocalContext.current)
 
@@ -3113,7 +3203,7 @@ fun SearchScreen(
                 }
             }
         } else if (searching) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoadingIndicator() }
         } else if (hasSearched && results.isEmpty()) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 item {
@@ -3139,21 +3229,32 @@ fun clearCoverCache(context: Context) {
 
 @Composable
 fun SettingsHeader(title: String) {
-    Text(text = title, style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+    Text(text = title, style = MaterialTheme.typography.titleSmallEmphasized, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 32.dp, end = 24.dp, top = 20.dp, bottom = 8.dp))
+}
+
+/** Android 16 style group: large outer corners, small inner ones, 2dp gaps. */
+@Composable
+fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).clip(RoundedCornerShape(24.dp)), verticalArrangement = Arrangement.spacedBy(2.dp), content = content)
+}
+
+@Composable
+private fun SettingIcon(icon: ImageVector?, enabled: Boolean = true) {
+    Box(modifier = Modifier.size(40.dp).background(if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape), contentAlignment = Alignment.Center) {
+        if (icon != null) Icon(icon, null, modifier = Modifier.size(22.dp), tint = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 @Composable
 fun SettingItemRow(
     icon: ImageVector?, title: String, subtitle: String = "", onClick: () -> Unit = {}, trailing: @Composable (() -> Unit)? = null
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), shape = RoundedCornerShape(20.dp), onClick = onClick, colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                if (icon != null) { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            }
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.surfaceContainer, onClick = onClick) {
+        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            SettingIcon(icon)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface)
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 if (subtitle.isNotEmpty()) { Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             if (trailing != null) { Spacer(modifier = Modifier.width(16.dp)); trailing() }
@@ -3165,15 +3266,13 @@ fun SettingItemRow(
 fun SettingSliderRow(
     icon: ImageVector, title: String, value: Float, valueRange: ClosedFloatingPointRange<Float>, valueText: String, enabled: Boolean = true, onValueChange: (Float) -> Unit
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = if (enabled) { MaterialTheme.colorScheme.onSurfaceVariant } else { MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f) })
-            }
+            SettingIcon(icon, enabled)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), color = if (enabled) { MaterialTheme.colorScheme.onSurface } else { MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) })
-                Text(text = valueText, style = MaterialTheme.typography.bodyMedium, color = if (enabled) { MaterialTheme.colorScheme.onSurfaceVariant } else { MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f) })
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = if (enabled) { MaterialTheme.colorScheme.onSurface } else { MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) })
+                Text(text = valueText, style = MaterialTheme.typography.bodyMedium, color = if (enabled) { MaterialTheme.colorScheme.onSurfaceVariant } else { MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f) })
                 Slider(value = value, onValueChange = onValueChange, valueRange = valueRange, enabled = enabled, modifier = Modifier.fillMaxWidth())
             }
         }
@@ -3250,10 +3349,12 @@ fun SettingsScreen(
                     Text(L.get("settings", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
                     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
                         item {
-                            SettingItemRow(Icons.Default.Palette, L.get("appearance", lang), L.get("appearance_desc", lang), { currentSettingsPage = "APARIENCIA" })
-                            SettingItemRow(Icons.Default.GraphicEq, L.get("player_and_sound", lang), L.get("player_desc", lang), { currentSettingsPage = "REPRODUCTOR" })
-                            SettingItemRow(Icons.Default.Storage, L.get("storage_and_data", lang), L.get("storage_desc", lang), { currentSettingsPage = "ALMACENAMIENTO" })
-                            SettingItemRow(Icons.Default.SystemUpdate, L.get("about_hearon", lang), L.get("current_version", lang) + " $APP_VERSION", { currentSettingsPage = "ACTUALIZADOR" })
+                            SettingsGroup {
+                                SettingItemRow(Icons.Default.Palette, L.get("appearance", lang), L.get("appearance_desc", lang), { currentSettingsPage = "APARIENCIA" })
+                                SettingItemRow(Icons.Default.GraphicEq, L.get("player_and_sound", lang), L.get("player_desc", lang), { currentSettingsPage = "REPRODUCTOR" })
+                                SettingItemRow(Icons.Default.Storage, L.get("storage_and_data", lang), L.get("storage_desc", lang), { currentSettingsPage = "ALMACENAMIENTO" })
+                                SettingItemRow(Icons.Default.SystemUpdate, L.get("about_hearon", lang), L.get("current_version", lang) + " $APP_VERSION", { currentSettingsPage = "ACTUALIZADOR" })
+                            }
                         }
                     }
                 }
@@ -3267,17 +3368,23 @@ fun SettingsScreen(
                     }
                     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
                         item {
-                            SettingItemRow(null, L.get("language", lang), L.get("language_desc", lang), { showLang = true })
+                            SettingsGroup {
+                                SettingItemRow(null, L.get("language", lang), L.get("language_desc", lang), { showLang = true })
+                            }
                             SettingsHeader(L.get("adaptive_colors", lang))
-                            SettingItemRow(Icons.Default.ColorLens, L.get("dynamic_theme", lang), L.get("dynamic_theme_desc", lang), { onDynamicColorToggle(!isDynamicColorEnabled) }) { Switch(checked = isDynamicColorEnabled, onCheckedChange = null) }
+                            SettingsGroup {
+                                SettingItemRow(Icons.Default.ColorLens, L.get("dynamic_theme", lang), L.get("dynamic_theme_desc", lang), { onDynamicColorToggle(!isDynamicColorEnabled) }) { Switch(checked = isDynamicColorEnabled, onCheckedChange = null) }
+                            }
                             SettingsHeader(L.get("app_theme", lang))
-                            listOf(L.get("theme_system", lang), L.get("theme_light", lang), L.get("theme_dark", lang)).forEach { t ->
-                                ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.elevatedCardColors(containerColor = if (currentTheme == t) { MaterialTheme.colorScheme.secondaryContainer } else { MaterialTheme.colorScheme.surfaceContainerHigh }), onClick = { onThemeChange(t) }) {
-                                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Text(text = t, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                                        Spacer(modifier = Modifier.weight(1f))
-                                        if (currentTheme == t) { Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.onSecondaryContainer) }
-                                    }
+                            val themes = listOf("System" to L.get("theme_system", lang), "Light" to L.get("theme_light", lang), "Dark" to L.get("theme_dark", lang))
+                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                                themes.forEachIndexed { i, (key, label) ->
+                                    ToggleButton(
+                                        checked = currentTheme == key,
+                                        onCheckedChange = { onThemeChange(key) },
+                                        modifier = Modifier.weight(1f),
+                                        shapes = when (i) { 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes(); themes.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes(); else -> ButtonGroupDefaults.connectedMiddleButtonShapes() }
+                                    ) { Text(label, maxLines = 1) }
                                 }
                             }
                         }
@@ -3294,10 +3401,12 @@ fun SettingsScreen(
                     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
                         item {
                             SettingsHeader(L.get("player", lang))
-                            SettingItemRow(Icons.Default.GraphicEq, L.get("sound_quality", lang), audioQuality, { showQuality = true })
-                            SettingItemRow(Icons.Default.CompareArrows, L.get("crossfade", lang), L.get("crossfade_desc", lang), { crossfadeEnabled = !crossfadeEnabled; prefs.edit().putBoolean("crossfade_enabled", crossfadeEnabled).apply() }) { Switch(checked = crossfadeEnabled, onCheckedChange = null) }
-                            SettingSliderRow(Icons.Default.WrapText, L.get("crossfade_duration", lang), crossfadeDur, 1f..10f, if (crossfadeEnabled) { "${crossfadeDur.toInt()} s" } else { L.get("disabled", lang) }, crossfadeEnabled) { crossfadeDur = it; prefs.edit().putFloat("crossfade_dur", it).apply() }
-                            SettingItemRow(Icons.Default.VolumeUp, L.get("audio_normalization", lang), L.get("audio_normalization_desc", lang), { normAudio = !normAudio; prefs.edit().putBoolean("norm_audio", normAudio).apply() }) { Switch(checked = normAudio, onCheckedChange = null) }
+                            SettingsGroup {
+                                SettingItemRow(Icons.Default.GraphicEq, L.get("sound_quality", lang), audioQuality, { showQuality = true })
+                                SettingItemRow(Icons.Default.CompareArrows, L.get("crossfade", lang), L.get("crossfade_desc", lang), { crossfadeEnabled = !crossfadeEnabled; prefs.edit().putBoolean("crossfade_enabled", crossfadeEnabled).apply() }) { Switch(checked = crossfadeEnabled, onCheckedChange = null) }
+                                SettingSliderRow(Icons.Default.WrapText, L.get("crossfade_duration", lang), crossfadeDur, 1f..10f, if (crossfadeEnabled) { "${crossfadeDur.toInt()} s" } else { L.get("disabled", lang) }, crossfadeEnabled) { crossfadeDur = it; prefs.edit().putFloat("crossfade_dur", it).apply() }
+                                SettingItemRow(Icons.Default.VolumeUp, L.get("audio_normalization", lang), L.get("audio_normalization_desc", lang), { normAudio = !normAudio; prefs.edit().putBoolean("norm_audio", normAudio).apply() }) { Switch(checked = normAudio, onCheckedChange = null) }
+                            }
                         }
                     }
                 }
@@ -3312,14 +3421,20 @@ fun SettingsScreen(
                     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
                         item {
                             SettingsHeader(L.get("invisible_audio_cache", lang))
-                            SettingItemRow(Icons.Default.LibraryMusic, L.get("auto_saved_music", lang), if(cachedCount > 0) { "$cachedCount " + L.get("tracks", lang) + " ($cacheSizeMB MB)" } else { "0 MB" }, {})
-                            SettingItemRow(Icons.Default.DeleteSweep, L.get("clear_audio_cache", lang), L.get("clear_audio_cache_desc", lang), { onClearCache() })
+                            SettingsGroup {
+                                SettingItemRow(Icons.Default.LibraryMusic, L.get("auto_saved_music", lang), if(cachedCount > 0) { "$cachedCount " + L.get("tracks", lang) + " ($cacheSizeMB MB)" } else { "0 MB" }, {})
+                                SettingItemRow(Icons.Default.DeleteSweep, L.get("clear_audio_cache", lang), L.get("clear_audio_cache_desc", lang), { onClearCache() })
+                            }
                             SettingsHeader(L.get("images_and_data", lang))
-                            SettingSliderRow(Icons.Default.ImageSearch, L.get("cover_limit", lang), maxImgCache, 128f..1024f, java.lang.String.format(java.util.Locale.US, "%.0f MB", maxImgCache), true) { maxImgCache = it; prefs.edit().putFloat("max_img_cache", it).apply() }
-                            SettingItemRow(Icons.Default.DeleteOutline, L.get("clear_covers", lang), L.get("clear_covers_desc", lang), { clearCoverCache(context) })
-                            SettingItemRow(Icons.Default.Info, L.get("data_saver", lang), L.get("data_saver_desc", lang), { dataSaver = !dataSaver; prefs.edit().putBoolean("data_saver", dataSaver).apply() }) { Switch(checked = dataSaver, onCheckedChange = null) }
+                            SettingsGroup {
+                                SettingSliderRow(Icons.Default.ImageSearch, L.get("cover_limit", lang), maxImgCache, 128f..1024f, java.lang.String.format(java.util.Locale.US, "%.0f MB", maxImgCache), true) { maxImgCache = it; prefs.edit().putFloat("max_img_cache", it).apply() }
+                                SettingItemRow(Icons.Default.DeleteOutline, L.get("clear_covers", lang), L.get("clear_covers_desc", lang), { clearCoverCache(context) })
+                                SettingItemRow(Icons.Default.Info, L.get("data_saver", lang), L.get("data_saver_desc", lang), { dataSaver = !dataSaver; prefs.edit().putBoolean("data_saver", dataSaver).apply() }) { Switch(checked = dataSaver, onCheckedChange = null) }
+                            }
                             SettingsHeader(L.get("clear_history", lang))
-                            SettingItemRow(Icons.Default.History, L.get("clear_history", lang), L.get("clear_history_desc", lang), { onClearHistory() })
+                            SettingsGroup {
+                                SettingItemRow(Icons.Default.History, L.get("clear_history", lang), L.get("clear_history_desc", lang), { onClearHistory() })
+                            }
                         }
                     }
                 }
@@ -3345,9 +3460,11 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             SettingsHeader(L.get("version_and_updates", lang))
-                            SettingItemRow(null, L.get("current_version", lang), "v$APP_VERSION", {})
-                            SettingItemRow(Icons.Default.Update, L.get("auto_updates", lang), "", { autoUpdate = !autoUpdate; prefs.edit().putBoolean("auto_update", autoUpdate).apply() }) { Switch(checked = autoUpdate, onCheckedChange = null) }
-                            SettingItemRow(Icons.Default.Notifications, L.get("notify_updates", lang), "", { notifyUpdate = !notifyUpdate; prefs.edit().putBoolean("notify_update", notifyUpdate).apply() }) { Switch(checked = notifyUpdate, onCheckedChange = null) }
+                            SettingsGroup {
+                                SettingItemRow(null, L.get("current_version", lang), "v$APP_VERSION", {})
+                                SettingItemRow(Icons.Default.Update, L.get("auto_updates", lang), "", { autoUpdate = !autoUpdate; prefs.edit().putBoolean("auto_update", autoUpdate).apply() }) { Switch(checked = autoUpdate, onCheckedChange = null) }
+                                SettingItemRow(Icons.Default.Notifications, L.get("notify_updates", lang), "", { notifyUpdate = !notifyUpdate; prefs.edit().putBoolean("notify_update", notifyUpdate).apply() }) { Switch(checked = notifyUpdate, onCheckedChange = null) }
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                             ElevatedCard(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), shape = RoundedCornerShape(20.dp),

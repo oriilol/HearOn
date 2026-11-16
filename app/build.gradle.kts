@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "com.clio.hearon"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.materialkolor:material-kolor:4.0.5")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.media3:media3-exoplayer:1.3.0")
     implementation("androidx.media3:media3-session:1.3.0")
