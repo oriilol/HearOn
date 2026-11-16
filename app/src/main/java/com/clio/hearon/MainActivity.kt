@@ -231,6 +231,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material.icons.filled.Language
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -1811,6 +1812,7 @@ fun HearonApp(
     var pos by remember { mutableLongStateOf(0L) }
     var dur by remember { mutableLongStateOf(0L) }
     var player by remember { mutableStateOf<Player?>(null) }
+    var controllerRef by remember { mutableStateOf<com.google.common.util.concurrent.ListenableFuture<MediaController>?>(null) }
 
     var originalQueue by remember { mutableStateOf<List<YtTrack>>(emptyList()) }
     var playQueue by remember { mutableStateOf<List<YtTrack>>(emptyList()) }
@@ -2093,8 +2095,13 @@ fun HearonApp(
             }
         }
 
-        val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
-        val controllerFuture = MediaController.Builder(context, token).buildAsync()
+        // Bound with the application context: when the activity is recreated
+        // (dark mode, rotation) its own bindings are already gone, and releasing a
+        // controller bound to it crashed with "Service not registered".
+        val appContext = context.applicationContext
+        val token = SessionToken(appContext, ComponentName(appContext, PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(appContext, token).buildAsync()
+        controllerRef = controllerFuture
 
         controllerFuture.addListener({
             player = controllerFuture.get()
@@ -2133,6 +2140,10 @@ fun HearonApp(
             })
             player?.repeatMode = repeatMode
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { controllerRef?.let { MediaController.releaseFuture(it) } }
     }
 
     LaunchedEffect(repeatMode) {
@@ -3370,7 +3381,7 @@ fun SettingsScreen(
                     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
                         item {
                             SettingsGroup {
-                                SettingItemRow(null, L.get("language", lang), L.get("language_desc", lang), { showLang = true })
+                                SettingItemRow(Icons.Default.Language, L.get("language", lang), L.get("language_desc", lang), { showLang = true })
                             }
                             SettingsHeader(L.get("adaptive_colors", lang))
                             SettingsGroup {
@@ -3451,7 +3462,7 @@ fun SettingsScreen(
                         item {
                             Spacer(modifier = Modifier.height(24.dp))
                             Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(painter = painterResource(id = R.drawable.logo), contentDescription = null, modifier = Modifier.size(72.dp), tint = Color.Unspecified)
+                                Icon(painter = painterResource(id = R.drawable.logo), contentDescription = null, modifier = Modifier.size(72.dp), tint = MaterialTheme.colorScheme.onSurface)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(text = "HearOn", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -3462,7 +3473,7 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             SettingsHeader(L.get("version_and_updates", lang))
                             SettingsGroup {
-                                SettingItemRow(null, L.get("current_version", lang), "v$APP_VERSION", {})
+                                SettingItemRow(Icons.Default.Info, L.get("current_version", lang), "v$APP_VERSION", {})
                                 SettingItemRow(Icons.Default.Update, L.get("auto_updates", lang), "", { autoUpdate = !autoUpdate; prefs.edit().putBoolean("auto_update", autoUpdate).apply() }) { Switch(checked = autoUpdate, onCheckedChange = null) }
                                 SettingItemRow(Icons.Default.Notifications, L.get("notify_updates", lang), "", { notifyUpdate = !notifyUpdate; prefs.edit().putBoolean("notify_update", notifyUpdate).apply() }) { Switch(checked = notifyUpdate, onCheckedChange = null) }
                             }
