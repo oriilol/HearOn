@@ -240,12 +240,13 @@ import java.net.URLEncoder
 import java.util.Locale
 
 /**
- * Google Sans Flex (variable font). Each weight sets the `wght` axis explicitly;
- * with a single Font entry every style rendered at the same weight.
+ * Google Sans Flex, fully rounded (ROND 100) like Google's Expressive apps. Each
+ * weight sets the `wght` axis explicitly; with a single Font entry every style
+ * rendered at the same weight.
  */
 val PixelFont = FontFamily(
     listOf(FontWeight.Light, FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold, FontWeight.ExtraBold).map { w ->
-        Font(resId = R.font.google_sans_flex, weight = w, variationSettings = FontVariation.Settings(FontVariation.weight(w.weight)))
+        Font(resId = R.font.google_sans_flex, weight = w, variationSettings = FontVariation.Settings(FontVariation.weight(w.weight), FontVariation.Setting("ROND", 100f)))
     }
 )
 
@@ -1645,7 +1646,7 @@ fun OfflineScreen(lang: String) {
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = L.get("offline_title", lang),
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -2819,7 +2820,7 @@ fun LyricsScreen(
                             val shapeRadius by animateDpAsState(targetValue = if (isActive) { 32.dp } else { 8.dp }, label = "")
                             val scale by animateFloatAsState(targetValue = if (isActive) { 1.05f } else { 1f }, label = "")
                             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).scale(scale).clip(RoundedCornerShape(shapeRadius)).background(bgColor).clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) { onSeek(line.timeMs) }.padding(vertical = if (isInstrumental) 8.dp else 16.dp, horizontal = 16.dp), contentAlignment = Alignment.Center) {
-                                if (isInstrumental) { if (isActive) { AppleMusicDots() } else { Text("•••", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) } } else { Text(text = line.text, textAlign = TextAlign.Center, style = if (isActive) { MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold) } else { MaterialTheme.typography.titleLarge }, color = if (isActive) { MaterialTheme.colorScheme.onPrimaryContainer } else { MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) }) }
+                                if (isInstrumental) { if (isActive) { AppleMusicDots() } else { Text("•••", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) } } else { Text(text = line.text, textAlign = TextAlign.Center, style = if (isActive) { MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold) } else { MaterialTheme.typography.titleLarge }, color = if (isActive) { MaterialTheme.colorScheme.onPrimaryContainer } else { MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) }) }
                             }
                         }
                     }
@@ -2931,7 +2932,7 @@ fun LibraryScreen(
                 }
             } else {
                 Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-                    Text(text = L.get("your_library", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
+                    Text(text = L.get("your_library", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
                     ConnectedToggleGroup(listOf("Favoritos" to L.get("favorites", lang), "Playlists" to L.get("playlists", lang), "Descargas" to L.get("downloads", lang)), libraryTab) { libraryTab = it }
                     when (libraryTab) {
                         "Descargas" -> {
@@ -3145,7 +3146,7 @@ fun HomeScreen(
 
     PullToRefreshBox(isRefreshing = isListLoading, onRefresh = onRefresh, state = state, modifier = Modifier.fillMaxSize(), indicator = { PullToRefreshDefaults.LoadingIndicator(state = state, isRefreshing = isListLoading, modifier = Modifier.align(Alignment.TopCenter)) }) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-            Text(text = L.get("home", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
+            Text(text = L.get("home", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
             ConnectedToggleGroup(listOf("Tendencias" to L.get("trending", lang), "Para ti" to L.get("for_you", lang), "Recientes" to L.get("recent", lang)), homeTab) { homeTab = it }
 
             val isOffline = !isOnline(LocalContext.current)
@@ -3188,7 +3189,7 @@ fun SearchScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-        Text(text = L.get("explore", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
+        Text(text = L.get("explore", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
         OutlinedTextField(value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }, shape = RoundedCornerShape(24.dp), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), keyboardActions = KeyboardActions(onSearch = { performSearch() }), colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer))
         ConnectedToggleGroup(listOf("MUSICA" to L.get("yt_music", lang), "VIDEO" to L.get("youtube", lang)), searchType) { searchType = it; if (query.isNotBlank()) { performSearch() } }
 
@@ -3306,7 +3307,7 @@ fun SettingsScreen(
     if (showQuality) {
         ModalBottomSheet(onDismissRequest = { showQuality = false }) {
             Column(modifier = Modifier.padding(bottom = 32.dp)) {
-                Text(L.get("sound_quality", lang), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
+                Text(L.get("sound_quality", lang), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
                 listOf(L.get("quality_high", lang), L.get("quality_normal", lang), L.get("quality_low", lang)).forEach { q ->
                     Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), shape = RoundedCornerShape(16.dp), color = if (audioQuality == q) { MaterialTheme.colorScheme.secondaryContainer } else { Color.Transparent }, onClick = { audioQuality = q; prefs.edit().putString("audio_quality", q).apply(); showQuality = false }) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -3323,7 +3324,7 @@ fun SettingsScreen(
     if (showLang) {
         ModalBottomSheet(onDismissRequest = { showLang = false }) {
             Column(modifier = Modifier.padding(bottom = 32.dp)) {
-                Text(L.get("language", lang), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
+                Text(L.get("language", lang), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
                 val langs = mapOf("system" to L.get("lang_system", lang), "es" to "Español", "en" to "English", "fr" to "Français", "de" to "Deutsch", "it" to "Italiano", "pt" to "Português", "ru" to "Русский", "ja" to "日本語", "zh" to "中文", "hi" to "हिन्दी", "ar" to "العربية")
                 val langsKeys = langs.keys.toList()
                 LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
@@ -3346,7 +3347,7 @@ fun SettingsScreen(
         when (page) {
             "MAIN" -> {
                 Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-                    Text(L.get("settings", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
+                    Text(L.get("settings", lang), style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(24.dp))
                     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
                         item {
                             SettingsGroup {
@@ -3452,7 +3453,7 @@ fun SettingsScreen(
                             Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(painter = painterResource(id = R.drawable.logo), contentDescription = null, modifier = Modifier.size(72.dp), tint = Color.Unspecified)
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Text(text = "HearOn", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface)
+                                Text(text = "HearOn", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(text = "made w/ love from \uD83C\uDDEA\uD83C\uDDF8 <3", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(modifier = Modifier.height(8.dp))
