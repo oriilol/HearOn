@@ -238,6 +238,12 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.HideImage
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.runtime.produceState
+import androidx.compose.foundation.layout.widthIn
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -293,6 +299,15 @@ fun normalizeTheme(raw: String?): String {
 
 object L {
     private val es = mapOf(
+        "play_next" to "Reproducir a continuación",
+        "add_to_queue" to "Añadir a la cola",
+        "added_to_queue" to "Añadida a la cola",
+        "will_play_next" to "Sonará a continuación",
+        "sleep_timer" to "Temporizador",
+        "sleep_end_of_track" to "Se parará al acabar la canción",
+        "end_of_track" to "Al acabar la canción",
+        "sleep_in" to "Se parará en %s",
+        "turn_off" to "Desactivar",
         "playlist_empty" to "Esta playlist está vacía",
         "playlist_empty_desc" to "Busca canciones y añádelas desde su menú",
         "find_songs" to "Buscar canciones",
@@ -415,6 +430,15 @@ object L {
     )
 
     private val en = mapOf(
+        "play_next" to "Play next",
+        "add_to_queue" to "Add to queue",
+        "added_to_queue" to "Added to queue",
+        "will_play_next" to "Will play next",
+        "sleep_timer" to "Sleep timer",
+        "sleep_end_of_track" to "Will stop at the end of the song",
+        "end_of_track" to "End of song",
+        "sleep_in" to "Will stop in %s",
+        "turn_off" to "Turn off",
         "playlist_empty" to "This playlist is empty",
         "playlist_empty_desc" to "Search for songs and add them from their menu",
         "find_songs" to "Find songs",
@@ -537,6 +561,15 @@ object L {
     )
 
     private val fr = mapOf(
+        "play_next" to "Lire ensuite",
+        "add_to_queue" to "Ajouter à la file",
+        "added_to_queue" to "Ajouté à la file",
+        "will_play_next" to "Sera lu ensuite",
+        "sleep_timer" to "Minuterie",
+        "sleep_end_of_track" to "S'arrêtera à la fin du titre",
+        "end_of_track" to "Fin du titre",
+        "sleep_in" to "S'arrêtera dans %s",
+        "turn_off" to "Désactiver",
         "playlist_empty" to "Cette playlist est vide",
         "playlist_empty_desc" to "Cherchez des titres et ajoutez-les depuis leur menu",
         "find_songs" to "Chercher des titres",
@@ -659,6 +692,15 @@ object L {
     )
 
     private val de = mapOf(
+        "play_next" to "Als Nächstes spielen",
+        "add_to_queue" to "Zur Warteschlange",
+        "added_to_queue" to "Zur Warteschlange hinzugefügt",
+        "will_play_next" to "Wird als Nächstes gespielt",
+        "sleep_timer" to "Sleep-Timer",
+        "sleep_end_of_track" to "Stoppt am Ende des Songs",
+        "end_of_track" to "Ende des Songs",
+        "sleep_in" to "Stoppt in %s",
+        "turn_off" to "Ausschalten",
         "playlist_empty" to "Diese Playlist ist leer",
         "playlist_empty_desc" to "Suche Songs und füge sie über ihr Menü hinzu",
         "find_songs" to "Songs suchen",
@@ -781,6 +823,15 @@ object L {
     )
 
     private val it = mapOf(
+        "play_next" to "Riproduci dopo",
+        "add_to_queue" to "Aggiungi alla coda",
+        "added_to_queue" to "Aggiunto alla coda",
+        "will_play_next" to "Sarà riprodotto dopo",
+        "sleep_timer" to "Timer di spegnimento",
+        "sleep_end_of_track" to "Si fermerà alla fine del brano",
+        "end_of_track" to "Fine del brano",
+        "sleep_in" to "Si fermerà tra %s",
+        "turn_off" to "Disattiva",
         "playlist_empty" to "Questa playlist è vuota",
         "playlist_empty_desc" to "Cerca brani e aggiungili dal loro menu",
         "find_songs" to "Cerca brani",
@@ -903,6 +954,15 @@ object L {
     )
 
     private val pt = mapOf(
+        "play_next" to "Reproduzir a seguir",
+        "add_to_queue" to "Adicionar à fila",
+        "added_to_queue" to "Adicionada à fila",
+        "will_play_next" to "Vai tocar a seguir",
+        "sleep_timer" to "Temporizador",
+        "sleep_end_of_track" to "Vai parar no fim da música",
+        "end_of_track" to "Fim da música",
+        "sleep_in" to "Vai parar dentro de %s",
+        "turn_off" to "Desativar",
         "playlist_empty" to "Esta playlist está vazia",
         "playlist_empty_desc" to "Procura músicas e adiciona-as a partir do menu",
         "find_songs" to "Procurar músicas",
@@ -1025,6 +1085,15 @@ object L {
     )
 
     private val ru = mapOf(
+        "play_next" to "Играть следующим",
+        "add_to_queue" to "Добавить в очередь",
+        "added_to_queue" to "Добавлено в очередь",
+        "will_play_next" to "Будет играть следующим",
+        "sleep_timer" to "Таймер сна",
+        "sleep_end_of_track" to "Остановится в конце песни",
+        "end_of_track" to "В конце песни",
+        "sleep_in" to "Остановится через %s",
+        "turn_off" to "Выключить",
         "playlist_empty" to "Этот плейлист пуст",
         "playlist_empty_desc" to "Найдите песни и добавьте их через меню",
         "find_songs" to "Найти песни",
@@ -1147,6 +1216,15 @@ object L {
     )
 
     private val ja = mapOf(
+        "play_next" to "次に再生",
+        "add_to_queue" to "キューに追加",
+        "added_to_queue" to "キューに追加しました",
+        "will_play_next" to "次に再生されます",
+        "sleep_timer" to "スリープタイマー",
+        "sleep_end_of_track" to "曲の終わりで停止します",
+        "end_of_track" to "曲の終わり",
+        "sleep_in" to "%s後に停止します",
+        "turn_off" to "オフにする",
         "playlist_empty" to "このプレイリストは空です",
         "playlist_empty_desc" to "曲を検索して、メニューから追加しましょう",
         "find_songs" to "曲を探す",
@@ -1269,6 +1347,15 @@ object L {
     )
 
     private val zh = mapOf(
+        "play_next" to "下一首播放",
+        "add_to_queue" to "添加到队列",
+        "added_to_queue" to "已添加到队列",
+        "will_play_next" to "将在下一首播放",
+        "sleep_timer" to "睡眠定时",
+        "sleep_end_of_track" to "将在本曲结束时停止",
+        "end_of_track" to "本曲结束时",
+        "sleep_in" to "将在 %s 后停止",
+        "turn_off" to "关闭",
         "playlist_empty" to "此歌单为空",
         "playlist_empty_desc" to "搜索歌曲并通过菜单添加",
         "find_songs" to "查找歌曲",
@@ -1391,6 +1478,15 @@ object L {
     )
 
     private val hi = mapOf(
+        "play_next" to "अगला चलाएँ",
+        "add_to_queue" to "कतार में जोड़ें",
+        "added_to_queue" to "कतार में जोड़ा गया",
+        "will_play_next" to "अगला चलेगा",
+        "sleep_timer" to "स्लीप टाइमर",
+        "sleep_end_of_track" to "गाना खत्म होने पर रुकेगा",
+        "end_of_track" to "गाने के अंत में",
+        "sleep_in" to "%s में रुकेगा",
+        "turn_off" to "बंद करें",
         "playlist_empty" to "यह प्लेलिस्ट खाली है",
         "playlist_empty_desc" to "गाने खोजें और उनके मेनू से जोड़ें",
         "find_songs" to "गाने खोजें",
@@ -1513,6 +1609,15 @@ object L {
     )
 
     private val ar = mapOf(
+        "play_next" to "تشغيل التالي",
+        "add_to_queue" to "إضافة إلى قائمة الانتظار",
+        "added_to_queue" to "أُضيفت إلى قائمة الانتظار",
+        "will_play_next" to "ستُشغَّل تاليًا",
+        "sleep_timer" to "مؤقت النوم",
+        "sleep_end_of_track" to "سيتوقف عند نهاية الأغنية",
+        "end_of_track" to "نهاية الأغنية",
+        "sleep_in" to "سيتوقف بعد %s",
+        "turn_off" to "إيقاف",
         "playlist_empty" to "قائمة التشغيل هذه فارغة",
         "playlist_empty_desc" to "ابحث عن أغانٍ وأضفها من قائمتها",
         "find_songs" to "ابحث عن أغانٍ",
@@ -1857,18 +1962,24 @@ fun HearonApp(
     var forYouTracks by remember { mutableStateOf<List<YtTrack>>(emptyList()) }
     var isLoadingForYou by remember { mutableStateOf(false) }
 
-    var currentTrack by remember { mutableStateOf<YtTrack?>(null) }
+    // Restored from the last session, so the app reopens where it was left (and
+    // keeps its state when the activity is recreated by rotation or dark mode).
+    val savedSession = remember { Storage.loadSession(prefs) }
+    var currentTrack by remember { mutableStateOf(savedSession?.let { it.queue[it.index] }) }
     var isPlaying by remember { mutableStateOf(false) }
-    var pos by remember { mutableLongStateOf(0L) }
-    var dur by remember { mutableLongStateOf(0L) }
+    var pos by remember { mutableLongStateOf(savedSession?.positionMs ?: 0L) }
+    var dur by remember { mutableLongStateOf(savedSession?.durationMs ?: 0L) }
     var player by remember { mutableStateOf<Player?>(null) }
     var controllerRef by remember { mutableStateOf<com.google.common.util.concurrent.ListenableFuture<MediaController>?>(null) }
 
-    var originalQueue by remember { mutableStateOf<List<YtTrack>>(emptyList()) }
-    var playQueue by remember { mutableStateOf<List<YtTrack>>(emptyList()) }
-    var currentQueueIndex by remember { mutableIntStateOf(-1) }
-    var isShuffle by remember { mutableStateOf(false) }
-    var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
+    var originalQueue by remember { mutableStateOf(savedSession?.queue ?: emptyList()) }
+    var playQueue by remember { mutableStateOf(savedSession?.queue ?: emptyList()) }
+    var currentQueueIndex by remember { mutableIntStateOf(savedSession?.index ?: -1) }
+    var pendingResumeMs by remember { mutableStateOf(savedSession?.positionMs) }
+    var sleepEndMs by remember { mutableStateOf<Long?>(null) }
+    var sleepEndOfTrack by remember { mutableStateOf(false) }
+    var isShuffle by remember { mutableStateOf(savedSession?.shuffle ?: false) }
+    var repeatMode by remember { mutableIntStateOf(savedSession?.repeatMode ?: Player.REPEAT_MODE_OFF) }
     var coverUpdateTrigger by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(currentTrack?.coverUrl) {
@@ -1998,6 +2109,70 @@ fun HearonApp(
         if (nextIdx != -1 && isOnline(context)) downloadTrack(playQueue[nextIdx])
     }
 
+    // Plain holder (not Compose state): writing it during composition must not trigger recomposition.
+    val handleTrackSelectRef = remember { arrayOfNulls<(YtTrack) -> Unit>(1) }
+
+    fun saveSession() {
+        if (currentTrack != null && currentQueueIndex in playQueue.indices) {
+            Storage.saveSession(prefs, Storage.Session(playQueue, currentQueueIndex, pos, dur, isShuffle, repeatMode))
+        }
+    }
+
+    /** Play/pause; after launching, the first play loads the restored track where it was left. */
+    fun togglePlay() {
+        val p = player ?: return
+        val track = currentTrack
+        if (!isPlaying && p.currentMediaItem == null && track != null) {
+            val resumeAt = pendingResumeMs
+            pendingResumeMs = null
+            scope.launch { playTrack(track, p, context, prefs, lang, startMs = resumeAt ?: 0L) }
+            return
+        }
+        if (isPlaying) p.pause() else p.play()
+    }
+
+    fun playNextInQueue(t: YtTrack) {
+        if (currentTrack == null) { handleTrackSelectRef[0]?.invoke(t); return }
+        playQueue = playQueue.toMutableList().apply { add((currentQueueIndex + 1).coerceAtMost(size), t) }
+        originalQueue = playQueue
+        Toast.makeText(context, L.get("will_play_next", lang), Toast.LENGTH_SHORT).show()
+        saveSession()
+    }
+
+    fun addToQueue(t: YtTrack) {
+        if (currentTrack == null) { handleTrackSelectRef[0]?.invoke(t); return }
+        playQueue = playQueue + t
+        originalQueue = playQueue
+        Toast.makeText(context, L.get("added_to_queue", lang), Toast.LENGTH_SHORT).show()
+        saveSession()
+    }
+
+    fun moveInQueue(from: Int, to: Int) {
+        val order = playQueue.indices.toMutableList().apply { add(to, removeAt(from)) }
+        playQueue = order.map { playQueue[it] }
+        currentQueueIndex = order.indexOf(currentQueueIndex)
+        originalQueue = playQueue
+        saveSession()
+    }
+
+    fun removeFromQueue(i: Int) {
+        if (i == currentQueueIndex || i !in playQueue.indices) return
+        playQueue = playQueue.toMutableList().apply { removeAt(i) }
+        if (i < currentQueueIndex) currentQueueIndex--
+        originalQueue = playQueue
+        saveSession()
+    }
+
+    fun setSleepTimer(minutes: Int) {
+        // minutes > 0: timer; -1: end of the current song; 0: off
+        sleepEndOfTrack = minutes == -1
+        sleepEndMs = if (minutes > 0) System.currentTimeMillis() + minutes * 60_000L else null
+        when {
+            minutes > 0 -> Toast.makeText(context, L.get("sleep_in", lang).format("$minutes min"), Toast.LENGTH_SHORT).show()
+            minutes == -1 -> Toast.makeText(context, L.get("sleep_end_of_track", lang), Toast.LENGTH_SHORT).show()
+        }
+    }
+
     /** Mix: the list shuffled, then extended with radio tracks similar to it. */
     val playMix: (List<YtTrack>) -> Unit = mix@{ list ->
         val playable = list.filter { isAppOnline || Downloads.isDownloaded(context, it.id) }.shuffled()
@@ -2023,6 +2198,7 @@ fun HearonApp(
     }
 
     val handleTrackSelect: (YtTrack) -> Unit = { track ->
+        pendingResumeMs = null
         val isLocal = Downloads.isDownloaded(context, track.id)
         if (!isAppOnline && !isLocal) {
             Toast.makeText(context, L.get("no_connection_track", lang), Toast.LENGTH_SHORT).show()
@@ -2044,6 +2220,8 @@ fun HearonApp(
             }
         }
     }
+
+    handleTrackSelectRef[0] = handleTrackSelect
 
     fun playNext() {
         if (playQueue.isNotEmpty() && currentQueueIndex < playQueue.size - 1) {
@@ -2155,6 +2333,15 @@ fun HearonApp(
 
         controllerFuture.addListener({
             player = controllerFuture.get()
+            player?.let { p ->
+                // After a rotation the service is still playing: just resync.
+                if (p.currentMediaItem != null) {
+                    isPlaying = p.isPlaying
+                    pendingResumeMs = null
+                    pos = p.currentPosition.coerceAtLeast(0L)
+                    dur = p.duration.coerceAtLeast(0L)
+                }
+            }
             player?.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
@@ -2175,7 +2362,9 @@ fun HearonApp(
                 }
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_ENDED) {
-                        if (repeatMode == Player.REPEAT_MODE_ONE) {
+                        if (sleepEndOfTrack) {
+                            sleepEndOfTrack = false
+                        } else if (repeatMode == Player.REPEAT_MODE_ONE) {
                             player?.seekTo(0)
                             player?.play()
                         } else {
@@ -2201,9 +2390,13 @@ fun HearonApp(
     }
 
     LaunchedEffect(isPlaying, crossfadeEnabled, crossfadeDur) {
+        var lastSave = 0L
         while (isPlaying) {
             pos = player?.currentPosition?.coerceAtLeast(0L) ?: 0L
             dur = player?.duration?.coerceAtLeast(0L) ?: 0L
+            val now = System.currentTimeMillis()
+            sleepEndMs?.let { end -> if (now >= end) { player?.pause(); sleepEndMs = null } }
+            if (now - lastSave > 5000) { saveSession(); lastSave = now }
 
             if (crossfadeEnabled && crossfadeDur > 0f && dur > 0) {
                 val remainingMs = dur - pos
@@ -2212,7 +2405,7 @@ fun HearonApp(
                 if (remainingMs <= fadeMs) {
                     player?.volume = (remainingMs.toFloat() / fadeMs.toFloat()).coerceIn(0f, 1f)
                     if (remainingMs <= 200L && repeatMode != Player.REPEAT_MODE_ONE) {
-                        playNext()
+                        if (sleepEndOfTrack) { sleepEndOfTrack = false; player?.pause() } else playNext()
                     }
                 } else if (pos <= fadeMs) {
                     player?.volume = (pos.toFloat() / fadeMs.toFloat()).coerceIn(0f, 1f)
@@ -2268,6 +2461,21 @@ fun HearonApp(
 
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = MaterialTheme.colorScheme.surfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
+
+                if (currentTrack != null && currentTrack?.id != t.id) {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        headlineContent = { Text(L.get("play_next", lang)) },
+                        leadingContent = { Icon(painterResource(R.drawable.ms_queue_play_next), null) },
+                        modifier = Modifier.clickable { playNextInQueue(t); trackOptionsMenu = null }
+                    )
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        headlineContent = { Text(L.get("add_to_queue", lang)) },
+                        leadingContent = { Icon(painterResource(R.drawable.ms_playlist_play), null) },
+                        modifier = Modifier.clickable { addToQueue(t); trackOptionsMenu = null }
+                    )
+                }
 
                 ListItem(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -2539,7 +2747,7 @@ fun HearonApp(
             ) {
                 ExpressiveMiniPlayer(
                     track = currentTrack!!, isPlaying = isPlaying, progress = if (dur > 0) (pos.toFloat() / dur).coerceIn(0f, 1f) else 0f, coverUpdateTrigger = coverUpdateTrigger,
-                    onPlayPause = { if (isPlaying) { player?.pause() } else { player?.play() } },
+                    onPlayPause = { togglePlay() },
                     onNext = { playNext() },
                     onExpand = { isFullScreen = true; fullScreenState = "PLAYER" }
                 )
@@ -2581,7 +2789,7 @@ fun HearonApp(
                             LyricsScreen(
                                 track = it, isPlaying = isPlaying, pos = pos, dur = dur, lang = lang,
                                 onBack = { fullScreenState = "PLAYER" },
-                                onPP = { if (isPlaying) { player?.pause() } else { player?.play() } },
+                                onPP = { togglePlay() },
                                 onSeek = { p -> player?.seekTo(p); player?.playWhenReady = true }
                             )
                         }
@@ -2590,14 +2798,18 @@ fun HearonApp(
                                 queue = playQueue, currentIndex = currentQueueIndex, coverUpdateTrigger = coverUpdateTrigger, lang = lang,
                                 onBack = { fullScreenState = "PLAYER" },
                                 onSelect = { idx ->
+                                    pendingResumeMs = null
                                     currentQueueIndex = idx; currentTrack = playQueue[idx]
                                     scope.launch { playTrack(currentTrack!!, player, context, prefs, lang); saveRecentTrack(currentTrack!!); prefetchNextTrack(currentQueueIndex); refreshCacheCount() }
-                                }
+                                },
+                                onMove = { from, to -> moveInQueue(from, to) },
+                                onRemove = { removeFromQueue(it) }
                             )
                         }
                         else -> currentTrack?.let { trackState ->
                             ExpressiveFullScreenPlayer(
                                 track = trackState, isPlaying = isPlaying, pos = pos, dur = dur, isLiked = likedTracks.any { it.id == trackState.id },
+                                sleepEndMs = sleepEndMs, sleepEndOfTrack = sleepEndOfTrack, onSleep = { setSleepTimer(it) },
                                 isShuffle = isShuffle, repeatMode = repeatMode, hasPrev = pos > 3000 || currentQueueIndex > 0,
                                 hasNext = currentQueueIndex < playQueue.size - 1 || repeatMode == Player.REPEAT_MODE_ALL, coverUpdateTrigger = coverUpdateTrigger, lang = lang,
                                 onLike = {
@@ -2610,7 +2822,7 @@ fun HearonApp(
                                     if (isShuffle) { playQueue = listOf(current) + originalQueue.filter { it.id != current.id }.shuffled(); currentQueueIndex = 0 } else { playQueue = originalQueue; currentQueueIndex = playQueue.indexOf(trackState) }
                                 },
                                 onRepeat = { repeatMode = when (repeatMode) { Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL; Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE; else -> Player.REPEAT_MODE_OFF }; player?.repeatMode = repeatMode },
-                                onPP = { if (isPlaying) { player?.pause() } else { player?.play() } },
+                                onPP = { togglePlay() },
                                 onSeek = { p -> player?.seekTo(p); player?.playWhenReady = true },
                                 onPrev = { playPrev() }, onNext = { playNext() }, onClose = { isFullScreen = false; fullScreenState = "PLAYER" }
                             )
@@ -2623,7 +2835,7 @@ fun HearonApp(
 }
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-private suspend fun playTrack(track: YtTrack, player: Player?, context: Context, prefs: SharedPreferences, lang: String) {
+private suspend fun playTrack(track: YtTrack, player: Player?, context: Context, prefs: SharedPreferences, lang: String, startMs: Long = 0L) {
     if (player == null) { return }
     if (player.currentMediaItem?.mediaId == track.id && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING)) { return }
 
@@ -2638,7 +2850,7 @@ private suspend fun playTrack(track: YtTrack, player: Player?, context: Context,
         val mime = if (isLocal) { MimeTypes.AUDIO_MP4 } else if (streamUrl.contains("webm")) { MimeTypes.AUDIO_WEBM } else { MimeTypes.AUDIO_MP4 }
         val mediaItem = MediaItem.Builder().setUri(streamUrl).setMediaId(track.id).setMimeType(mime).setMediaMetadata(MediaMetadata.Builder().setTitle(track.title).setArtist(track.artist).setArtworkUri(Uri.parse(coverFor(track, 544, prefs))).build()).build()
 
-        withContext(Dispatchers.Main) { player.stop(); player.clearMediaItems(); player.setMediaItem(mediaItem); player.prepare(); player.play() }
+        withContext(Dispatchers.Main) { player.stop(); player.clearMediaItems(); player.setMediaItem(mediaItem, startMs); player.prepare(); player.play() }
 
         if (!isLocal && isOnline(context)) {
             // Invisible cache: keep a copy of every played track for offline use.
@@ -2657,6 +2869,7 @@ private suspend fun playTrack(track: YtTrack, player: Player?, context: Context,
 @Composable
 fun ExpressiveFullScreenPlayer(
     track: YtTrack, isPlaying: Boolean, pos: Long, dur: Long, isLiked: Boolean, isShuffle: Boolean, repeatMode: Int, hasPrev: Boolean, hasNext: Boolean, coverUpdateTrigger: Int, lang: String,
+    sleepEndMs: Long?, sleepEndOfTrack: Boolean, onSleep: (Int) -> Unit,
     onLike: () -> Unit, onLyrics: () -> Unit, onQueue: () -> Unit, onMenuClick: () -> Unit, onShuffle: () -> Unit, onRepeat: () -> Unit, onPP: () -> Unit, onSeek: (Long) -> Unit, onPrev: () -> Unit, onNext: () -> Unit, onClose: () -> Unit
 ) {
     BackHandler { onClose() }
@@ -2708,7 +2921,7 @@ fun ExpressiveFullScreenPlayer(
                     Spacer(modifier = Modifier.height(12.dp))
                     PlayerProgress(pos, dur, onSeek)
                     Spacer(modifier = Modifier.height(16.dp))
-                    PlayerControls(isPlaying, hasPrev, hasNext, isShuffle, repeatMode, onPP, onPrev, onNext, onLyrics, onShuffle, onRepeat, onQueue)
+                    PlayerControls(isPlaying, hasPrev, hasNext, isShuffle, repeatMode, onPP, onPrev, onNext, onLyrics, onShuffle, onRepeat, onQueue, lang, sleepEndMs, sleepEndOfTrack, onSleep)
                 }
             }
         } else {
@@ -2729,7 +2942,7 @@ fun ExpressiveFullScreenPlayer(
                 Spacer(modifier = Modifier.height(20.dp))
                 PlayerProgress(pos, dur, onSeek)
                 Spacer(modifier = Modifier.height(20.dp))
-                PlayerControls(isPlaying, hasPrev, hasNext, isShuffle, repeatMode, onPP, onPrev, onNext, onLyrics, onShuffle, onRepeat, onQueue)
+                PlayerControls(isPlaying, hasPrev, hasNext, isShuffle, repeatMode, onPP, onPrev, onNext, onLyrics, onShuffle, onRepeat, onQueue, lang, sleepEndMs, sleepEndOfTrack, onSleep)
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
@@ -2770,10 +2983,40 @@ private fun PlayerProgress(pos: Long, dur: Long, onSeek: (Long) -> Unit) {
  * Expressive transport controls: the big play button morphs between round
  * (paused) and square (playing); shuffle/repeat are toggle buttons.
  */
+/** Moon button: 15/30/45/60 min or end of song; shows the remaining time while active. */
+@Composable
+private fun SleepTimerButton(lang: String, sleepEndMs: Long?, sleepEndOfTrack: Boolean, onSleep: (Int) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val active = sleepEndMs != null || sleepEndOfTrack
+    val remaining by produceState(initialValue = "", sleepEndMs) {
+        while (sleepEndMs != null) {
+            val s = ((sleepEndMs - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+            value = "%d:%02d".format(s / 60, s % 60)
+            delay(1000)
+        }
+        value = ""
+    }
+    Box {
+        IconToggleButton(checked = active, onCheckedChange = { open = true }, shapes = IconButtonDefaults.toggleableShapes(), colors = IconButtonDefaults.iconToggleButtonColors(checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer, checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer), modifier = Modifier.widthIn(min = 48.dp)) {
+            if (remaining.isNotEmpty()) Text(remaining, style = MaterialTheme.typography.labelMedium)
+            else Icon(painterResource(if (active) R.drawable.ms_bedtime_fill1 else R.drawable.ms_bedtime), contentDescription = L.get("sleep_timer", lang))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            listOf(15, 30, 45, 60).forEach { m -> DropdownMenuItem(text = { Text("$m min") }, onClick = { open = false; onSleep(m) }) }
+            DropdownMenuItem(text = { Text(L.get("end_of_track", lang)) }, onClick = { open = false; onSleep(-1) })
+            if (active) {
+                HorizontalDivider()
+                DropdownMenuItem(text = { Text(L.get("turn_off", lang)) }, onClick = { open = false; onSleep(0) })
+            }
+        }
+    }
+}
+
 @Composable
 private fun PlayerControls(
     isPlaying: Boolean, hasPrev: Boolean, hasNext: Boolean, isShuffle: Boolean, repeatMode: Int,
-    onPP: () -> Unit, onPrev: () -> Unit, onNext: () -> Unit, onLyrics: () -> Unit, onShuffle: () -> Unit, onRepeat: () -> Unit, onQueue: () -> Unit
+    onPP: () -> Unit, onPrev: () -> Unit, onNext: () -> Unit, onLyrics: () -> Unit, onShuffle: () -> Unit, onRepeat: () -> Unit, onQueue: () -> Unit,
+    lang: String, sleepEndMs: Long?, sleepEndOfTrack: Boolean, onSleep: (Int) -> Unit
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -2794,6 +3037,7 @@ private fun PlayerControls(
                 Icon(painterResource(if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.ms_repeat_one else R.drawable.ms_repeat), null)
             }
             IconButton(onClick = onQueue, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(R.drawable.ms_queue_music), null) }
+            SleepTimerButton(lang, sleepEndMs, sleepEndOfTrack, onSleep)
         }
     }
 }
@@ -2909,30 +3153,57 @@ fun LyricsScreen(
     }
 }
 
+/** Queue: drag the handle to reorder, swipe left to remove (not the playing track). */
 @Composable
 fun QueueScreen(
-    queue: List<YtTrack>, currentIndex: Int, coverUpdateTrigger: Int, lang: String, onBack: () -> Unit, onSelect: (Int) -> Unit
+    queue: List<YtTrack>, currentIndex: Int, coverUpdateTrigger: Int, lang: String, onBack: () -> Unit, onSelect: (Int) -> Unit,
+    onMove: (Int, Int) -> Unit, onRemove: (Int) -> Unit
 ) {
     BackHandler { onBack() }
     val prefs = LocalContext.current.getSharedPreferences("hearon_prefs", Context.MODE_PRIVATE)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = currentIndex.coerceAtLeast(0))
+    val reorderState = rememberReorderableLazyListState(listState) { from, to -> onMove(from.index, to.index) }
+    // Unique keys even if the same song is queued twice.
+    val keys = remember(queue) { val seen = mutableMapOf<String, Int>(); queue.map { t -> val n = seen.merge(t.id, 1, Int::plus)!!; "${t.id}#$n" } }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).statusBarsPadding()) {
-        Box(modifier = Modifier.fillMaxWidth().padding(24.dp).height(48.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).size(48.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), CircleShape)) { Icon(Icons.Default.ArrowBack, null, tint = MaterialTheme.colorScheme.onSurface) }
-            Text(text = L.get("play_queue", lang), modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface)
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(56.dp)) {
+            FilledTonalIconButton(onClick = onBack, shapes = IconButtonDefaults.shapes(), modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+            Text(text = L.get("play_queue", lang), modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.titleLargeEmphasized)
         }
-        LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
-            itemsIndexed(queue) { index, track ->
-                val active = index == currentIndex
-                val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 226, prefs) }
-                Row(modifier = Modifier.fillMaxWidth().animateContentSize().background(if (active) { MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) } else { Color.Transparent }).clickable { onSelect(index) }.padding(horizontal = 24.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentScale = ContentScale.Crop)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = track.title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium), color = if (active) { MaterialTheme.colorScheme.primary } else { MaterialTheme.colorScheme.onSurface }, maxLines = 1)
-                        Text(text = track.artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 100.dp)) {
+            itemsIndexed(queue, key = { i, _ -> keys[i] }) { index, track ->
+                ReorderableItem(reorderState, key = keys[index]) { isDragging ->
+                    val active = index == currentIndex
+                    val currentIndexState = rememberUpdatedState(index)
+                    val dismissState = rememberSwipeToDismissBoxState(confirmValueChange = { value ->
+                        if (value == SwipeToDismissBoxValue.EndToStart && currentIndexState.value != currentIndex) { onRemove(currentIndexState.value); true } else false
+                    })
+                    val elevation by animateDpAsState(if (isDragging) 8.dp else 0.dp, label = "dragElevation")
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        enableDismissFromStartToEnd = false,
+                        gesturesEnabled = !active,
+                        backgroundContent = {
+                            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp), contentAlignment = Alignment.CenterEnd) {
+                                Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                        }
+                    ) {
+                        Surface(shadowElevation = elevation, color = if (active) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface) {
+                            val customCover = remember(track.id, coverUpdateTrigger) { coverFor(track, 226, prefs) }
+                            Row(modifier = Modifier.fillMaxWidth().clickable { onSelect(index) }.padding(start = 24.dp, end = 8.dp, top = 10.dp, bottom = 10.dp).alpha(if (index < currentIndex) 0.5f else 1f), verticalAlignment = Alignment.CenterVertically) {
+                                AsyncImage(model = customCover, contentDescription = null, modifier = Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentScale = ContentScale.Crop)
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = track.title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium), color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(text = track.artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                                }
+                                if (active) Icon(Icons.Default.GraphicEq, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 4.dp))
+                                IconButton(onClick = {}, modifier = Modifier.draggableHandle()) { Icon(painterResource(R.drawable.ms_drag_handle), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            }
+                        }
                     }
-                    if (active) { Icon(Icons.Default.GraphicEq, null, tint = MaterialTheme.colorScheme.primary) }
                 }
             }
         }

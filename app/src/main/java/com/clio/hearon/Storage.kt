@@ -59,6 +59,21 @@ object Storage {
         return migrated
     }
 
+    /** Last playback session: queue, current index and position. */
+    data class Session(val queue: List<YtTrack>, val index: Int, val positionMs: Long, val durationMs: Long, val shuffle: Boolean, val repeatMode: Int)
+
+    fun saveSession(prefs: SharedPreferences, s: Session) {
+        val o = JSONObject().put("queue", JSONArray(tracksToJson(s.queue))).put("index", s.index).put("pos", s.positionMs).put("dur", s.durationMs).put("shuffle", s.shuffle).put("repeat", s.repeatMode)
+        prefs.edit().putString("session_json", o.toString()).apply()
+    }
+
+    fun loadSession(prefs: SharedPreferences): Session? = runCatching {
+        val o = JSONObject(prefs.getString("session_json", null) ?: return null)
+        val q = tracksFromJson(o.getJSONArray("queue").toString())
+        val i = o.getInt("index")
+        if (i !in q.indices) null else Session(q, i, o.optLong("pos"), o.optLong("dur"), o.optBoolean("shuffle"), o.optInt("repeat"))
+    }.getOrNull()
+
     fun savePlaylists(prefs: SharedPreferences, list: List<Playlist>) {
         val arr = JSONArray()
         list.forEach { p -> arr.put(JSONObject().put("name", p.name).put("tracks", JSONArray(tracksToJson(p.tracks))).apply { p.cover?.let { put("cover", it) } }) }
