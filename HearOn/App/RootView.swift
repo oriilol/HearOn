@@ -6,7 +6,6 @@ enum AppTab: Hashable { case home, library, settings, search }
 struct RootView: View {
     @State private var tab: AppTab = .home
     @State private var ui = UIState.shared
-    @State private var photoItem: PhotosPickerItem?
     @Namespace private var playerNS
     private let player = PlayerController.shared
     private let settings = AppSettings.shared
@@ -18,29 +17,14 @@ struct RootView: View {
             .tint(settings.dynamicColors ? (player.accentColor ?? .accentColor) : .accentColor)
             .fullScreenCover(isPresented: $ui.showPlayer) {
                 PlayerScreen()
+                    // Sheets opened from the player's menu must be presented from the
+                    // player itself: the root view is underneath this cover.
+                    .modifier(TrackActionPresenters(isActive: ui.showPlayer))
+                    .overlay(alignment: .top) { ToastView() }
                     .tint(settings.dynamicColors ? (player.accentColor ?? .accentColor) : .accentColor)
                     .navigationTransition(.zoom(sourceID: "miniplayer", in: playerNS))
             }
-            .sheet(item: $ui.addToPlaylist) { track in
-                AddToPlaylistSheet(track: track)
-            }
-            .alert(t("track_info_title"), isPresented: Binding(get: { ui.infoFor != nil }, set: { if !$0 { ui.infoFor = nil } }), presenting: ui.infoFor) { _ in
-                Button(t("close")) {}
-            } message: { track in
-                Text(trackInfo(track))
-            }
-            .photosPicker(isPresented: Binding(get: { ui.coverPickerFor != nil }, set: { if !$0 && photoItem == nil { ui.coverPickerFor = nil } }), selection: $photoItem, matching: .images)
-            .onChange(of: photoItem) { _, item in
-                guard let item, let track = ui.coverPickerFor else { return }
-                Task {
-                    if let data = try? await item.loadTransferable(type: Data.self) {
-                        LibraryStore.shared.setCustomCover(data, for: track.id)
-                        player.toast = t("cover_saved")
-                    }
-                    photoItem = nil
-                    ui.coverPickerFor = nil
-                }
-            }
+            .modifier(TrackActionPresenters(isActive: !ui.showPlayer))
             .overlay(alignment: .top) { ToastView() }
             .environment(\.locale, Locale(identifier: L.resolve(settings.lang)))
             .environment(\.layoutDirection, L.isRTL(settings.lang) ? .rightToLeft : .leftToRight)
@@ -57,25 +41,47 @@ struct RootView: View {
         }
     }
 
-    private func trackInfo(_ track: Track) -> String {
-        let local = DownloadManager.shared.isDownloaded(track.id)
-        var lines = [
-            t("title_label") + track.title,
-            t("artist_label") + track.artist,
-            t("yt_id_label") + track.id,
-            "",
-            t("origin_label") + (local ? t("local_cache") : t("streaming")),
-        ]
-        if !local { lines.append(t("network_quality") + t("quality_\(settings.audioQuality.rawValue)")) }
-        return lines.joined(separator: "\n")
-    }
-
     private func checkForUpdate() async {
         guard settings.notifyUpdate, let latest = await YTMusicClient.latestVersion() else { return }
         let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
         if latest.compare(current, options: .numeric) == .orderedDescending {
             player.toast = t("update_available") + latest
         }
+    }
+}
+
+/// Add to playlist, track info and cover picker, opened from any track menu.
+/// Attached both to the root view and to the full-screen player; only the one
+/// on top is active, because SwiftUI can't present over a full-screen cover
+/// from underneath it (which is why these did nothing from the player in 1.3.0).
+private struct TrackActionPresenters: ViewModifier {
+    let isActive: Bool
+    @State private var ui = UIState.shared
+    @State private var photoItem: PhotosPickerItem?
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(item: Binding(get: { isActive ? ui.addToPlaylist : nil }, set: { ui.addToPlaylist = $0 })) { track in
+                AddToPlaylistSheet(track: track)
+            }
+            .sheet(item: Binding(get: { isActive ? ui.infoFor : nil }, set: { ui.infoFor = $0 })) { track in
+                TrackInfoSheet(track: track)
+            }
+            .photosPicker(
+                isPresented: Binding(get: { isActive && ui.coverPickerFor != nil }, set: { if !$0 && photoItem == nil { ui.coverPickerFor = nil } }),
+                selection: $photoItem, matching: .images
+            )
+            .onChange(of: photoItem) { _, item in
+                guard let item, let track = ui.coverPickerFor else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        LibraryStore.shared.setCustomCover(data, for: track.id)
+                        PlayerController.shared.toast = t("cover_saved")
+                    }
+                    photoItem = nil
+                    ui.coverPickerFor = nil
+                }
+            }
     }
 }
 
@@ -102,7 +108,7 @@ private struct MiniPlayerAccessory: ViewModifier {
     }
 }
 
-private struct ToastView: View {
+struct ToastView: View {
     private let player = PlayerController.shared
 
     var body: some View {

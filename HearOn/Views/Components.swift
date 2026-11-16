@@ -176,3 +176,68 @@ struct AddToPlaylistSheet: View {
         .presentationDetents([.medium, .large])
     }
 }
+
+/// Track details: replaces the plain-text alert from 1.3.0.
+struct TrackInfoSheet: View {
+    let track: Track
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+    private let player = PlayerController.shared
+
+    private var isLocal: Bool { DownloadManager.shared.isDownloaded(track.id) }
+
+    private var fileSize: String? {
+        guard isLocal, let bytes = (try? FileManager.default.attributesOfItem(atPath: DownloadManager.shared.fileURL(track.id).path))?[.size] as? Int64 else { return nil }
+        return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+
+    private var shareURL: URL { URL(string: "https://music.youtube.com/watch?v=\(track.id)")! }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    VStack(spacing: 12) {
+                        CoverImage(track: track, size: 544, radius: 20)
+                            .frame(width: 160, height: 160)
+                            .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
+                        VStack(spacing: 2) {
+                            Text(track.title).appFont(.title3, .bold).multilineTextAlignment(.center)
+                            Text(track.artist).appFont(.body).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+                }
+                Section {
+                    if player.current?.id == track.id, player.duration > 0 {
+                        LabeledContent(t("duration"), value: formatTime(player.duration))
+                    }
+                    LabeledContent(t("origin_label").trimmingCharacters(in: CharacterSet(charactersIn: ": ")), value: isLocal ? t("local_cache") : t("streaming"))
+                    if let bitrate = StreamResolver.cachedBitrate(for: track.id) {
+                        LabeledContent(t("bitrate"), value: "\(bitrate / 1000) kbps")
+                    } else {
+                        LabeledContent(t("bitrate"), value: t("quality_\(AppSettings.shared.audioQuality.rawValue)"))
+                    }
+                    if let fileSize { LabeledContent(t("file_size"), value: fileSize) }
+                    LabeledContent(t("yt_id_label").trimmingCharacters(in: CharacterSet(charactersIn: ": "))) {
+                        Text(track.id).monospaced()
+                    }
+                }
+                Section {
+                    Button(copied ? t("copied") : t("copy_id"), systemImage: copied ? "checkmark" : "doc.on.doc") {
+                        UIPasteboard.general.string = track.id
+                        withAnimation { copied = true }
+                    }
+                    ShareLink(item: shareURL) { Label(t("share"), systemImage: "square.and.arrow.up") }
+                }
+            }
+            .navigationTitle(t("track_info_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button(role: .close) { dismiss() } }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}

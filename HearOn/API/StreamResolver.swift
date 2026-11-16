@@ -12,6 +12,11 @@ enum StreamResolver {
     private static var cache: [String: (Resolved, Date)] = [:]
     private static let lock = NSLock()
 
+    /// Bitrate of the last stream resolved for this video, if any.
+    static func cachedBitrate(for videoId: String) -> Int? {
+        lock.withLock { cache[videoId]?.0.bitrate }
+    }
+
     static func audioURL(for videoId: String) async -> Resolved? {
         // Stream URLs expire after ~6h; reuse them for 1h.
         let cached = lock.withLock { cache[videoId] }

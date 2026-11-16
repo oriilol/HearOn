@@ -32,6 +32,10 @@ final class PlayerController {
     private let monitor = NWPathMonitor()
     private var loadTask: Task<Void, Never>?
     private var statusObservation: NSKeyValueObservation?
+    /// Real duration of the current track. YouTube's m4a files often declare
+    /// twice their length in the header, which AVFoundation trusts.
+    private var realDuration: Double?
+    private var endHandled = false
 
     var hasNext: Bool { index < queue.count - 1 || (repeatMode == .all && !queue.isEmpty) }
     var hasPrev: Bool { position > 3 || index > 0 }
@@ -45,7 +49,8 @@ final class PlayerController {
         }
         endObserver = NotificationCenter.default.addObserver(forName: AVPlayerItem.didPlayToEndTimeNotification, object: nil, queue: .main) { [weak self] note in
             MainActor.assumeIsolated {
-                guard let self, (note.object as? AVPlayerItem) === self.player.currentItem else { return }
+                guard let self, (note.object as? AVPlayerItem) === self.player.currentItem, !self.endHandled else { return }
+                self.endHandled = true
                 self.itemEnded()
             }
         }
@@ -140,6 +145,7 @@ final class PlayerController {
     }
 
     func seek(to seconds: Double) {
+        if seconds < (realDuration ?? .infinity) - 1 { endHandled = false }
         player.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
         position = seconds
         if !isPlaying { player.play(); isPlaying = true }
@@ -181,6 +187,8 @@ final class PlayerController {
         current = track
         position = 0
         duration = 0
+        realDuration = nil
+        endHandled = false
         isLoading = true
         LibraryStore.shared.addRecent(track)
         updateNowPlaying()
@@ -189,7 +197,9 @@ final class PlayerController {
         loadTask?.cancel()
         loadTask = Task {
             let local = DownloadManager.shared.isDownloaded(track.id)
-            let url: URL? = local ? DownloadManager.shared.fileURL(track.id) : await StreamResolver.audioURL(for: track.id)?.url
+            let resolved = local ? nil : await StreamResolver.audioURL(for: track.id)
+            let url: URL? = local ? DownloadManager.shared.fileURL(track.id) : resolved?.url
+            realDuration = local ? AudioDuration.ofFile(DownloadManager.shared.fileURL(track.id)) : resolved.flatMap { AudioDuration.fromStreamURL($0.url) }
             guard !Task.isCancelled, current?.id == track.id else { return }
             guard let url else {
                 isLoading = false
@@ -250,7 +260,18 @@ final class PlayerController {
     private func tick(_ seconds: Double) {
         guard seconds.isFinite else { return }
         position = max(0, seconds)
-        if let d = player.currentItem?.duration.seconds, d.isFinite, d > 0 { duration = d }
+        if let real = realDuration {
+            duration = real
+        } else if let d = player.currentItem?.duration.seconds, d.isFinite, d > 0 {
+            duration = d
+        }
+        // The item doesn't end on its own until the (wrong) header duration, so
+        // move on when the real audio is over.
+        if let real = realDuration, !endHandled, position >= real - 0.3, isPlaying {
+            endHandled = true
+            itemEnded()
+            return
+        }
         applyCrossfade()
     }
 
@@ -347,5 +368,25 @@ final class PlayerController {
                 updateNowPlaying()
             }
         }
+    }
+}
+
+import AudioToolbox
+
+enum AudioDuration {
+    /// googlevideo URLs carry the real length in the `dur` query parameter.
+    static func fromStreamURL(_ url: URL) -> Double? {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "dur" }?.value.flatMap(Double.init)
+    }
+
+    /// Duration measured from the audio packets, not the container header.
+    static func ofFile(_ url: URL) -> Double? {
+        var fileID: AudioFileID?
+        guard AudioFileOpenURL(url as CFURL, .readPermission, 0, &fileID) == noErr, let fileID else { return nil }
+        defer { AudioFileClose(fileID) }
+        var seconds: Double = 0
+        var size = UInt32(MemoryLayout<Double>.size)
+        guard AudioFileGetProperty(fileID, kAudioFilePropertyEstimatedDuration, &size, &seconds) == noErr, seconds > 0 else { return nil }
+        return seconds
     }
 }
